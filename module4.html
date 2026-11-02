@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Модуль 4 — Evals и tracing</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <div class="container">
+        <span class="brand"><a href="index.html">← AI Upskilling</a></span>
+        <nav>
+          <a href="#t1">4.1</a>
+          <a href="#t2">4.2</a>
+          <a href="#t3">4.3</a>
+          <a href="#t4">4.4</a>
+          <a href="#t5">4.5</a>
+        </nav>
+      </div>
+    </div>
+
+    <div class="container">
+      <section class="module-hero">
+        <span class="num">Модуль 4</span>
+        <h1>Evals и tracing</h1>
+        <p>
+          «Кажется, отвечает неплохо» — это не метрика. В этом модуле вы
+          построите набор проверочных вопросов, посчитаете объективные метрики,
+          подключите LLM-судью и добавите трассировку, чтобы видеть путь каждого
+          запроса.
+        </p>
+        <div class="note">
+          Используем KnowledgeBot из модулей 1–3. Для LLM-судьи —
+          <code>llm_client.py</code>.
+        </div>
+      </section>
+
+      <div class="layout">
+        <aside class="toc">
+          <h4>Задания модуля</h4>
+          <ol>
+            <li><a href="#t1">Набор проверочных вопросов</a></li>
+            <li><a href="#t2">Метрики качества</a></li>
+            <li><a href="#t3">LLM-as-a-Judge</a></li>
+            <li><a href="#t4">Трассировка запроса</a></li>
+            <li><a href="#t5">Observability</a></li>
+          </ol>
+        </aside>
+
+        <main>
+          <!-- 4.1 -->
+          <article class="task" id="t1">
+            <span class="chip">Задание 4.1</span>
+            <h2>Набор проверочных вопросов</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> создаём датасет вопросов с эталонными
+              ответами. <strong> Зачем:</strong> один удачный ответ ничего не
+              доказывает — нужен стабильный набор, на котором можно сравнивать
+              версии.
+            </div>
+
+            <h3><span class="step-label">Шаг 1</span>Файл с эталонами</h3>
+            <pre><code># evals.jsonl — по одному JSON на строку
+{"id": "q1", "question": "Сколько дней отпуска?", "expected": "28", "sources": ["vacation.md"]}
+{"id": "q2", "question": "Как сбросить пароль?", "expected": "письмо", "sources": ["account.md"]}
+{"id": "q3", "question": "Что делать при двойном списании?", "expected": "биллинг", "sources": ["billing.md"]}
+{"id": "q4", "question": "Какая погода на Марсе?", "expected": "не найдено", "sources": []}</code></pre>
+
+            <h3><span class="step-label">Шаг 2</span>Загрузка датасета</h3>
+            <pre><code>import json
+
+def load_evals(path: str = "evals.jsonl") -> list[dict]:
+    with open(path, encoding="utf-8") as f:
+        return [json.loads(line) for line in f if line.strip()]
+
+cases = load_evals()
+print(f"Загружено кейсов: {len(cases)}")</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 3</span>Заглушка бота для прогона
+            </h3>
+            <pre><code># пока бот простой; в модуле 5 он станет RAG-ботом
+def bot(question: str) -> dict:
+    data = {"отпуск": ("28 дней", ["vacation.md"]),
+            "пароль": ("Сбросьте по ссылке из письма", ["account.md"]),
+            "списан": ("Обратитесь в биллинг", ["billing.md"])}
+    for key, (ans, src) in data.items():
+        if key in question.lower():
+            return {"answer": ans, "sources": src}
+    return {"answer": "Информация не найдена", "sources": []}</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 4</span>Прогон по всем вопросам
+            </h3>
+            <pre><code>def run(cases: list[dict]) -> list[dict]:
+    results = []
+    for c in cases:
+        out = bot(c["question"])
+        results.append({**c, "got": out["answer"], "got_sources": out["sources"]})
+    return results
+
+results = run(cases)
+for r in results:
+    print(r["id"], "->", r["got"])</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 5</span>Почему важен кейс-отказ
+            </h3>
+            <pre><code># q4 проверяет, что бот НЕ выдумывает ответ про Марс.
+# Без таких кейсов вы не заметите галлюцинации.
+mars = [r for r in results if r["id"] == "q4"][0]
+print("Отказ сработал:", "не найден" in mars["got"].lower())</code></pre>
+            <div class="note">
+              <b>Вывод:</b> датасет включает не только «есть ответ», но и
+              «ответа быть не должно».
+            </div>
+          </article>
+
+          <!-- 4.2 -->
+          <article class="task" id="t2">
+            <span class="chip">Задание 4.2</span>
+            <h2>Метрики качества</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> считаем correctness, точность
+              источников и формат. <strong>Зачем:</strong> метрики превращают
+              «ощущения» в числа, которые можно отслеживать между релизами.
+            </div>
+
+            <h3><span class="step-label">Шаг 1</span>Корректность ответа</h3>
+            <pre><code>def is_correct(expected: str, got: str) -> bool:
+    return expected.lower() in got.lower()   # простая проверка вхождения</code></pre>
+
+            <h3><span class="step-label">Шаг 2</span>Точность источников</h3>
+            <pre><code>def source_ok(expected: list[str], got: list[str]) -> bool:
+    if not expected:
+        return got == []            # для отказа источников быть не должно
+    return any(s in got for s in expected)</code></pre>
+
+            <h3><span class="step-label">Шаг 3</span>Сводные метрики</h3>
+            <pre><code>def score(results: list[dict]) -> dict:
+    n = len(results)
+    correct = sum(is_correct(r["expected"], r["got"]) for r in results)
+    src = sum(source_ok(r["sources"], r["got_sources"]) for r in results)
+    return {
+        "correctness": round(correct / n, 2),
+        "source_accuracy": round(src / n, 2),
+        "n": n,
+    }
+
+print(score(results))</code></pre>
+
+            <h3><span class="step-label">Шаг 4</span>Отчёт по кейсам</h3>
+            <pre><code>print(f'{"id":4}{"correct":9}{"src":5}')
+for r in results:
+    print(f'{r["id"]:4}{str(is_correct(r["expected"], r["got"])):9}'
+          f'{str(source_ok(r["sources"], r["got_sources"])):5}')</code></pre>
+
+            <h3><span class="step-label">Шаг 5</span>Порог регрессии</h3>
+            <pre><code>THRESHOLD = 0.75
+m = score(results)
+assert m["correctness"] &gt;= THRESHOLD, f"Качество упало: {m['correctness']}"
+print("Прошли порог качества.")</code></pre>
+            <div class="note">
+              <b>Вывод:</b> метрики + порог = защита от регрессий. Такой assert
+              можно поставить в CI.
+            </div>
+          </article>
+
+          <!-- 4.3 -->
+          <article class="task" id="t3">
+            <span class="chip">Задание 4.3</span>
+            <h2>LLM-as-a-Judge</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> просим отдельную модель оценить ответ
+              по шкале 1–5. <strong>Зачем:</strong> проверка вхождением груба;
+              судья-модель оценивает смысл, но ей тоже нельзя доверять слепо.
+            </div>
+
+            <h3><span class="step-label">Шаг 1</span>Prompt судьи</h3>
+            <pre><code>JUDGE = """Ты строгий оценщик ответов поддержки.
+Дай оценку от 1 до 5, где 5 — точный и полезный ответ.
+Верни ТОЛЬКО JSON: {"score": int, "reason": str}.
+Вопрос: {q}
+Эталон: {exp}
+Ответ бота: {got}"""</code></pre>
+
+            <h3><span class="step-label">Шаг 2</span>Вызов судьи</h3>
+            <pre><code>import json
+from llm_client import LLMClient
+judge_model = LLMClient()
+
+def judge(q: str, expected: str, got: str) -> dict:
+    prompt = JUDGE.format(q=q, exp=expected, got=got)
+    raw = judge_model.ask(prompt, response_format={"type": "json_object"})
+    return json.loads(raw)</code></pre>
+
+            <h3><span class="step-label">Шаг 3</span>Оцениваем прогон</h3>
+            <pre><code>for r in results:
+    verdict = judge(r["question"], r["expected"], r["got"])
+    r["judge"] = verdict["score"]
+    print(r["id"], verdict["score"], "-", verdict["reason"][:50])</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 4</span>Сверяем судью с эталоном
+            </h3>
+            <pre><code># Где судья и простая метрика расходятся — там интересные случаи
+for r in results:
+    rule = is_correct(r["expected"], r["got"])
+    llm = r["judge"] &gt;= 4
+    if rule != llm:
+        print("Расхождение:", r["id"], "rule=", rule, "judge=", r["judge"])</code></pre>
+
+            <h3><span class="step-label">Шаг 5</span>Средняя оценка судьи</h3>
+            <pre><code>avg = sum(r["judge"] for r in results) / len(results)
+print(f"Средняя оценка судьи: {avg:.2f} / 5")</code></pre>
+            <div class="note">
+              <b>Вывод:</b> LLM-судья масштабирует оценку смысла, но сам может
+              ошибаться — держите небольшой «золотой» набор, проверенный
+              человеком.
+            </div>
+          </article>
+
+          <!-- 4.4 -->
+          <article class="task" id="t4">
+            <span class="chip">Задание 4.4</span>
+            <h2>Трассировка запроса (tracing)</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> присваиваем каждому запросу trace_id
+              и логируем все шаги. <strong>Зачем:</strong> когда ответ плохой,
+              нужно видеть весь путь: какой контекст, какие токены, сколько
+              времени.
+            </div>
+
+            <h3><span class="step-label">Шаг 1</span>Идентификатор трассы</h3>
+            <pre><code>import uuid, time
+
+def new_trace() -> str:
+    return uuid.uuid4().hex[:8]</code></pre>
+
+            <h3><span class="step-label">Шаг 2</span>Логгер шагов</h3>
+            <pre><code>TRACES: list[dict] = []
+
+def log_step(trace_id: str, step: str, **data):
+    TRACES.append({"trace": trace_id, "step": step, "ts": time.time(), **data})</code></pre>
+
+            <h3><span class="step-label">Шаг 3</span>Оборачиваем бота</h3>
+            <pre><code>def traced_bot(question: str) -> dict:
+    tid = new_trace()
+    log_step(tid, "received", question=question)
+    start = time.time()
+    out = bot(question)                       # bot() из задания 4.1
+    log_step(tid, "answered",
+             latency=round(time.time() - start, 3),
+             sources=out["sources"])
+    out["trace"] = tid
+    return out
+
+print(traced_bot("Сколько дней отпуска?"))</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 4</span>Смотрим одну трассу целиком
+            </h3>
+            <pre><code>def show_trace(trace_id: str):
+    for e in TRACES:
+        if e["trace"] == trace_id:
+            print(e["step"], {k: v for k, v in e.items() if k not in ("trace", "ts")})
+
+last = TRACES[-1]["trace"]
+show_trace(last)</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 5</span>Находим медленные запросы
+            </h3>
+            <pre><code>slow = [e for e in TRACES if e["step"] == "answered" and e.get("latency", 0) &gt; 1.0]
+print("Медленных запросов:", len(slow))</code></pre>
+            <div class="note">
+              <b>Вывод:</b> trace_id связывает все события одного запроса — это
+              основа отладки в проде.
+            </div>
+          </article>
+
+          <!-- 4.5 -->
+          <article class="task" id="t5">
+            <span class="chip">Задание 4.5</span>
+            <h2>Observability</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> собираем агрегаты по всем запросам и
+              сохраняем в файл. <strong>Зачем:</strong> мониторинг показывает
+              здоровье системы во времени, а не только один ответ.
+            </div>
+
+            <h3><span class="step-label">Шаг 1</span>Копим метрики запросов</h3>
+            <pre><code>import json, time
+
+METRICS: list[dict] = []
+
+def record(trace_id: str, latency: float, tokens: int, error: bool):
+    METRICS.append({"trace": trace_id, "latency": latency,
+                    "tokens": tokens, "error": error, "ts": time.time()})</code></pre>
+
+            <h3><span class="step-label">Шаг 2</span>Наполняем демо-данными</h3>
+            <pre><code>import random
+for _ in range(50):
+    record(uuid.uuid4().hex[:8],
+           latency=round(random.uniform(0.3, 2.5), 2),
+           tokens=random.randint(200, 1500),
+           error=random.random() &lt; 0.1)</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 3</span>Сводный дашборд в консоль
+            </h3>
+            <pre><code>def dashboard(m: list[dict]):
+    n = len(m)
+    avg_lat = sum(x["latency"] for x in m) / n
+    p95 = sorted(x["latency"] for x in m)[int(n * 0.95)]
+    err = sum(x["error"] for x in m) / n
+    tok = sum(x["tokens"] for x in m)
+    print(f"Запросов:    {n}")
+    print(f"Средн. лат.: {avg_lat:.2f}s")
+    print(f"P95 лат.:    {p95:.2f}s")
+    print(f"Ошибки:      {err:.1%}")
+    print(f"Токены всего:{tok}")
+
+dashboard(METRICS)</code></pre>
+
+            <h3><span class="step-label">Шаг 4</span>Алерт по порогам</h3>
+            <pre><code>def check_alerts(m: list[dict]):
+    err = sum(x["error"] for x in m) / len(m)
+    if err &gt; 0.05:
+        print(f"ALERT: доля ошибок {err:.1%} выше 5%")
+
+check_alerts(METRICS)</code></pre>
+
+            <h3><span class="step-label">Шаг 5</span>Экспорт для анализа</h3>
+            <pre><code>with open("metrics.json", "w", encoding="utf-8") as f:
+    json.dump(METRICS, f, ensure_ascii=False, indent=2)
+print("Метрики сохранены в metrics.json")</code></pre>
+            <div class="note">
+              <b>Итог модуля:</b> вы умеете измерять качество (evals), оценивать
+              смысл (LLM-судья) и наблюдать систему (tracing + метрики). В
+              модуле 5 бот наконец получит настоящие знания через RAG.
+            </div>
+          </article>
+
+          <div class="pager">
+            <a href="module3.html"
+              ><div class="dir">← Назад</div>
+              <div class="ttl">Модуль 3. AI-SDLC</div></a
+            >
+            <a class="next" href="module5.html"
+              ><div class="dir">Дальше →</div>
+              <div class="ttl">Модуль 5. RAG</div></a
+            >
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <footer class="site-footer">
+      <div class="container">AI Upskilling · Модуль 4 · KnowledgeBot</div>
+    </footer>
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Модуль 5 — RAG: ingestion, retrieval и evidence</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <div class="container">
+        <span class="brand"><a href="index.html">← AI Upskilling</a></span>
+        <nav>
+          <a href="#t1">5.1</a>
+          <a href="#t2">5.2</a>
+          <a href="#t3">5.3</a>
+          <a href="#t4">5.4</a>
+          <a href="#t5">5.5</a>
+        </nav>
+      </div>
+    </div>
+
+    <div class="container">
+      <section class="module-hero">
+        <span class="num">Модуль 5</span>
+        <h1>RAG: ingestion, retrieval и evidence</h1>
+        <p>
+          Теперь KnowledgeBot будет отвечать не из «головы» модели, а по вашим
+          документам — и указывать источники. Вы пройдёте весь путь: загрузка и
+          нарезка документов, эмбеддинги, поиск, grounding ответа и продвинутые
+          приёмы.
+        </p>
+        <div class="note">
+          Установка: <code>pip install chromadb openai python-dotenv</code>.
+          Положите 3–5 файлов <code>.md</code> в папку
+          <code>docs/</code> (например vacation.md, account.md, billing.md).
+        </div>
+      </section>
+
+      <div class="layout">
+        <aside class="toc">
+          <h4>Задания модуля</h4>
+          <ol>
+            <li><a href="#t1">Ingestion и chunking</a></li>
+            <li><a href="#t2">Embeddings и vector DB</a></li>
+            <li><a href="#t3">Retrieval</a></li>
+            <li><a href="#t4">Grounding и источники</a></li>
+            <li><a href="#t5">Advanced RAG</a></li>
+          </ol>
+        </aside>
+
+        <main>
+          <!-- 5.1 -->
+          <article class="task" id="t1">
+            <span class="chip">Задание 5.1</span>
+            <h2>Ingestion и chunking</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> читаем документы и режем их на
+              фрагменты. <strong> Зачем:</strong> модель и поиск работают с
+              небольшими кусками; целый документ и дорог, и «размывает»
+              релевантность.
+            </div>
+
+            <h3><span class="step-label">Шаг 1</span>Читаем документы</h3>
+            <pre><code>import glob, os
+
+def load_docs(folder: str = "docs") -> list[dict]:
+    docs = []
+    for path in glob.glob(f"{folder}/*.md"):
+        text = open(path, encoding="utf-8").read()
+        docs.append({"source": os.path.basename(path), "text": text})
+    return docs
+
+docs = load_docs()
+print("Документов:", len(docs))</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 2</span>Простая нарезка по длине
+            </h3>
+            <pre><code>def chunk_text(text: str, size: int = 500) -> list[str]:
+    return [text[i:i + size] for i in range(0, len(text), size)]
+
+print(len(chunk_text(docs[0]["text"])))</code></pre>
+
+            <h3><span class="step-label">Шаг 3</span>Нарезка с перекрытием</h3>
+            <pre><code>def chunk_overlap(text: str, size: int = 500, overlap: int = 80) -> list[str]:
+    chunks, start = [], 0
+    while start &lt; len(text):
+        chunks.append(text[start:start + size])
+        start += size - overlap        # перекрытие сохраняет контекст на границах
+    return chunks</code></pre>
+
+            <h3><span class="step-label">Шаг 4</span>Чанки с метаданными</h3>
+            <pre><code>def build_chunks(docs: list[dict]) -> list[dict]:
+    out = []
+    for d in docs:
+        for i, c in enumerate(chunk_overlap(d["text"])):
+            out.append({"id": f'{d["source"]}-{i}',
+                        "source": d["source"], "text": c})
+    return out
+
+chunks = build_chunks(docs)
+print("Всего чанков:", len(chunks))</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 5</span>Проверяем качество нарезки
+            </h3>
+            <pre><code>for c in chunks[:3]:
+    print(c["id"], "|", c["text"][:60].replace("\n", " "), "...")</code></pre>
+            <div class="note">
+              <b>Вывод:</b> размер чанка и перекрытие — главные ручки RAG.
+              Слишком крупно — дорого и неточно; слишком мелко — теряется смысл.
+            </div>
+          </article>
+
+          <!-- 5.2 -->
+          <article class="task" id="t2">
+            <span class="chip">Задание 5.2</span>
+            <h2>Embeddings и vector DB</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> превращаем чанки в векторы и кладём в
+              базу. <strong> Зачем:</strong> эмбеддинги позволяют искать по
+              смыслу, а не по точному совпадению слов.
+            </div>
+
+            <h3><span class="step-label">Шаг 1</span>Функция эмбеддинга</h3>
+            <pre><code>from openai import OpenAI
+from dotenv import load_dotenv
+load_dotenv()
+client = OpenAI()
+
+def embed(text: str) -> list[float]:
+    r = client.embeddings.create(model="text-embedding-3-small", input=text)
+    return r.data[0].embedding</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 2</span>Смысловая близость на примере
+            </h3>
+            <pre><code>import numpy as np
+
+def cosine(a, b) -> float:
+    a, b = np.array(a), np.array(b)
+    return float(a @ b / (np.linalg.norm(a) * np.linalg.norm(b)))
+
+print(cosine(embed("отпуск"), embed("отгул")))      # близко
+print(cosine(embed("отпуск"), embed("процессор")))  # далеко</code></pre>
+
+            <h3><span class="step-label">Шаг 3</span>Создаём коллекцию</h3>
+            <pre><code>import chromadb
+db = chromadb.Client()
+col = db.get_or_create_collection("knowledgebot")</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 4</span>Загружаем чанки (ingestion)
+            </h3>
+            <pre><code>def ingest(chunks: list[dict]):
+    col.add(
+        ids=[c["id"] for c in chunks],
+        embeddings=[embed(c["text"]) for c in chunks],
+        documents=[c["text"] for c in chunks],
+        metadatas=[{"source": c["source"]} for c in chunks],
+    )
+
+ingest(chunks)                      # chunks из задания 5.1
+print("В базе объектов:", col.count())</code></pre>
+
+            <h3><span class="step-label">Шаг 5</span>Проверяем сохранность</h3>
+            <pre><code>peek = col.get(limit=2)
+print(peek["ids"], peek["metadatas"])</code></pre>
+            <div class="note">
+              <b>Вывод:</b> ingestion = нарезка + эмбеддинги + сохранение с
+              метаданными (источником). Источник понадобится для ссылок в
+              ответе.
+            </div>
+          </article>
+
+          <!-- 5.3 -->
+          <article class="task" id="t3">
+            <span class="chip">Задание 5.3</span>
+            <h2>Retrieval</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> по вопросу находим самые близкие
+              чанки. <strong> Зачем:</strong> качество ответа RAG ограничено
+              качеством поиска — это оценивают отдельно от генерации.
+            </div>
+
+            <h3><span class="step-label">Шаг 1</span>Базовый поиск</h3>
+            <pre><code>def retrieve(question: str, k: int = 3) -> list[dict]:
+    res = col.query(query_embeddings=[embed(question)], n_results=k)
+    hits = []
+    for text, meta in zip(res["documents"][0], res["metadatas"][0]):
+        hits.append({"text": text, "source": meta["source"]})
+    return hits
+
+for h in retrieve("Сколько дней отпуска?"):
+    print(h["source"], "|", h["text"][:50])</code></pre>
+
+            <h3><span class="step-label">Шаг 2</span>Смотрим дистанции</h3>
+            <pre><code>res = col.query(query_embeddings=[embed("Сколько дней отпуска?")],
+                n_results=3, include=["distances", "metadatas"])
+print(list(zip(res["metadatas"][0], res["distances"][0])))</code></pre>
+
+            <h3><span class="step-label">Шаг 3</span>Порог релевантности</h3>
+            <pre><code>def retrieve_filtered(question: str, k: int = 3, max_dist: float = 0.6):
+    res = col.query(query_embeddings=[embed(question)],
+                    n_results=k, include=["documents", "metadatas", "distances"])
+    hits = []
+    for text, meta, dist in zip(res["documents"][0],
+                                res["metadatas"][0], res["distances"][0]):
+        if dist &lt;= max_dist:          # отсекаем нерелевантное
+            hits.append({"text": text, "source": meta["source"]})
+    return hits</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 4</span>Проверяем нерелевантный
+              запрос
+            </h3>
+            <pre><code>print(retrieve_filtered("Какая погода на Марсе?"))  # ожидаем пустой список</code></pre>
+
+            <h3><span class="step-label">Шаг 5</span>Мини-оценка retrieval</h3>
+            <pre><code>eval_q = [("Сколько дней отпуска?", "vacation.md"),
+          ("Как сбросить пароль?", "account.md")]
+hits_at_1 = 0
+for q, expected in eval_q:
+    top = retrieve_filtered(q, k=1)
+    if top and top[0]["source"] == expected:
+        hits_at_1 += 1
+print(f"Hit@1: {hits_at_1}/{len(eval_q)}")</code></pre>
+            <div class="note">
+              <b>Вывод:</b> retrieval измеряется отдельно (Hit@k). Если поиск не
+              нашёл нужный чанк, никакая модель не спасёт ответ.
+            </div>
+          </article>
+
+          <!-- 5.4 -->
+          <article class="task" id="t4">
+            <span class="chip">Задание 5.4</span>
+            <h2>Grounding и источники</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> генерируем ответ строго по найденным
+              чанкам и прикладываем источники. <strong>Зачем:</strong> ответ без
+              источника нельзя проверить; grounding снижает галлюцинации.
+            </div>
+
+            <h3><span class="step-label">Шаг 1</span>Собираем контекст</h3>
+            <pre><code>def build_context(hits: list[dict]) -> str:
+    return "\n---\n".join(f'[{h["source"]}] {h["text"]}' for h in hits)</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 2</span>Prompt с требованием
+              grounding
+            </h3>
+            <pre><code>RAG_PROMPT = """Ответь на вопрос, используя ТОЛЬКО контекст ниже.
+Если ответа в контексте нет — ответь: "Информация не найдена в базе знаний".
+Контекст:
+{context}
+
+Вопрос: {question}"""</code></pre>
+
+            <h3><span class="step-label">Шаг 3</span>Полный RAG-ответ</h3>
+            <pre><code>from llm_client import LLMClient
+bot_llm = LLMClient()
+
+def answer(question: str) -> dict:
+    hits = retrieve_filtered(question, k=3)
+    if not hits:
+        return {"answer": "Информация не найдена в базе знаний.", "sources": []}
+    prompt = RAG_PROMPT.format(context=build_context(hits), question=question)
+    text = bot_llm.ask(prompt)
+    sources = sorted({h["source"] for h in hits})
+    return {"answer": text, "sources": sources}
+
+print(answer("Сколько дней отпуска?"))
+print(answer("Какая погода на Марсе?"))</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 4</span>Проверяем честный отказ
+            </h3>
+            <pre><code>res = answer("Сколько стоит подписка на Netflix?")
+assert "не найдена" in res["answer"].lower()
+assert res["sources"] == []
+print("Отказ при отсутствии данных работает.")</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 5</span>Показ источников пользователю
+            </h3>
+            <pre><code>def format_reply(res: dict) -> str:
+    out = res["answer"]
+    if res["sources"]:
+        out += "\n\nИсточники:\n" + "\n".join(f"- {s}" for s in res["sources"])
+    return out
+
+print(format_reply(answer("Как сбросить пароль?")))</code></pre>
+            <div class="note">
+              <b>Вывод:</b> правило «отвечай только по контексту + покажи
+              источник» — ядро доверенного ассистента.
+            </div>
+          </article>
+
+          <!-- 5.5 -->
+          <article class="task" id="t5">
+            <span class="chip">Задание 5.5</span>
+            <h2>Advanced RAG</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> добавляем переформулировку запроса,
+              гибридный отбор и переоценку. <strong>Зачем:</strong> базовый RAG
+              часто промахивается на синонимах и общих формулировках.
+            </div>
+
+            <h3>
+              <span class="step-label">Шаг 1</span>Расширяем запрос (query
+              expansion)
+            </h3>
+            <pre><code>def expand_query(q: str) -> str:
+    syn = bot_llm.ask(f"Дай 3 синонима/переформулировки запроса одной строкой: {q}")
+    return q + " " + syn</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 2</span>Берём больше кандидатов
+            </h3>
+            <pre><code>def retrieve_many(question: str, k: int = 8) -> list[dict]:
+    res = col.query(query_embeddings=[embed(expand_query(question))], n_results=k)
+    return [{"text": t, "source": m["source"]}
+            for t, m in zip(res["documents"][0], res["metadatas"][0])]</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 3</span>Переоценка (rerank) моделью
+            </h3>
+            <pre><code>def rerank(question: str, hits: list[dict], top: int = 3) -> list[dict]:
+    scored = []
+    for h in hits:
+        s = bot_llm.ask(
+            f"Оцени от 0 до 10, насколько фрагмент отвечает на вопрос. "
+            f"Только число.\nВопрос: {question}\nФрагмент: {h['text']}")
+        try:
+            scored.append((float(s.strip()), h))
+        except ValueError:
+            scored.append((0.0, h))
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return [h for _, h in scored[:top]]</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 4</span>Собираем продвинутый ответ
+            </h3>
+            <pre><code>def answer_advanced(question: str) -> dict:
+    candidates = retrieve_many(question)
+    best = rerank(question, candidates)
+    if not best:
+        return {"answer": "Информация не найдена в базе знаний.", "sources": []}
+    prompt = RAG_PROMPT.format(context=build_context(best), question=question)
+    return {"answer": bot_llm.ask(prompt),
+            "sources": sorted({h["source"] for h in best})}
+
+print(answer_advanced("Сколько отгулов положено сотруднику?"))</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 5</span>Сравниваем базовый и
+              продвинутый RAG
+            </h3>
+            <pre><code>q = "Что делать, если деньги списали дважды?"
+print("base:    ", answer(q)["sources"])
+print("advanced:", answer_advanced(q)["sources"])</code></pre>
+            <div class="note">
+              <b>Итог модуля:</b> KnowledgeBot отвечает по документам с
+              источниками. В модуле 6 научим его ещё и действовать — вызывать
+              внешние инструменты.
+            </div>
+          </article>
+
+          <div class="pager">
+            <a href="module4.html"
+              ><div class="dir">← Назад</div>
+              <div class="ttl">Модуль 4. Evals</div></a
+            >
+            <a class="next" href="module6.html"
+              ><div class="dir">Дальше →</div>
+              <div class="ttl">Модуль 6. Tools и MCP</div></a
+            >
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <footer class="site-footer">
+      <div class="container">AI Upskilling · Модуль 5 · KnowledgeBot</div>
+    </footer>
+    <script src="app.js"></script>
+  </body>
+</html>

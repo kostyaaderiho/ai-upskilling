@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Модуль 3 — AI-assisted SDLC с coding agents</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <div class="container">
+        <span class="brand"><a href="index.html">← AI Upskilling</a></span>
+        <nav>
+          <a href="#t1">3.1</a>
+          <a href="#t2">3.2</a>
+          <a href="#t3">3.3</a>
+          <a href="#t4">3.4</a>
+          <a href="#t5">3.5</a>
+        </nav>
+      </div>
+    </div>
+
+    <div class="container">
+      <section class="module-hero">
+        <span class="num">Модуль 3</span>
+        <h1>AI-assisted SDLC с coding agents</h1>
+        <p>
+          Здесь вы перестаёте печатать каждую строку сами и начинаете направлять
+          AI-агента: Copilot, Claude Code или Cursor. Вы соберёте каркас сервиса
+          KnowledgeBot (<code>POST /ask</code>), но главное — освоите
+          контролируемый процесс: план → ограниченная область → проверка diff →
+          тесты.
+        </p>
+        <div class="note">
+          Задания можно выполнять в VS Code с GitHub Copilot или в Claude Code /
+          Cursor. Код сервиса — на FastAPI, но акцент модуля на
+          <b>процессе работы с агентом</b>.
+        </div>
+      </section>
+
+      <div class="layout">
+        <aside class="toc">
+          <h4>Задания модуля</h4>
+          <ol>
+            <li><a href="#t1">GitHub Copilot в работе</a></li>
+            <li><a href="#t2">Claude Code и CLAUDE.md</a></li>
+            <li><a href="#t3">Spec-driven development</a></li>
+            <li><a href="#t4">Проверка вывода агента</a></li>
+            <li><a href="#t5">Свои команды и review</a></li>
+          </ol>
+        </aside>
+
+        <main>
+          <!-- 3.1 -->
+          <article class="task" id="t1">
+            <span class="chip">Задание 3.1</span>
+            <h2>GitHub Copilot в работе</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> используем автодополнение и chat для
+              первого эндпойнта. <strong>Зачем:</strong> понять два режима
+              Copilot — подсказка по ходу набора и диалог по задаче — и где
+              каждый уместен.
+            </div>
+
+            <h3><span class="step-label">Шаг 1</span>Проект и зависимости</h3>
+            <pre><code>mkdir knowledgebot
+cd knowledgebot
+python -m venv .venv
+.venv\Scripts\activate
+pip install fastapi uvicorn pytest httpx</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 2</span>Автодополнение по комментарию
+            </h3>
+            <p>
+              Создайте <code>app/main.py</code>, напишите только комментарий и
+              дайте Copilot дополнить тело:
+            </p>
+            <pre><code># FastAPI app with POST /ask that takes {"question": str}
+# and returns {"answer": str, "sources": list[str]}
+</code></pre>
+            <div class="note">
+              Copilot предложит каркас. Не принимайте вслепую — читайте
+              предложение перед Tab.
+            </div>
+
+            <h3>
+              <span class="step-label">Шаг 3</span>Эталон, который должен
+              получиться
+            </h3>
+            <pre><code>from fastapi import FastAPI
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class AskRequest(BaseModel):
+    question: str
+
+class AskResponse(BaseModel):
+    answer: str
+    sources: list[str]
+
+@app.post("/ask", response_model=AskResponse)
+def ask(req: AskRequest) -> AskResponse:
+    return AskResponse(answer=f"Заглушка: {req.question}", sources=[])</code></pre>
+
+            <h3><span class="step-label">Шаг 4</span>Copilot Chat для теста</h3>
+            <p>
+              В чате Copilot попросите: «Напиши pytest для POST /ask с
+              TestClient». Ожидаемый результат:
+            </p>
+            <pre><code># tests/test_ask.py
+from fastapi.testclient import TestClient
+from app.main import app
+
+client = TestClient(app)
+
+def test_ask_ok():
+    r = client.post("/ask", json={"question": "привет"})
+    assert r.status_code == 200
+    assert "answer" in r.json()</code></pre>
+
+            <h3><span class="step-label">Шаг 5</span>Запуск</h3>
+            <pre><code>uvicorn app.main:app --reload
+# в другом терминале:
+pytest -q</code></pre>
+            <div class="note">
+              <b>Вывод:</b> автодополнение ускоряет набор, chat решает задачу
+              целиком. Ответственность за корректность — на вас.
+            </div>
+          </article>
+
+          <!-- 3.2 -->
+          <article class="task" id="t2">
+            <span class="chip">Задание 3.2</span>
+            <h2>Claude Code и память проекта (CLAUDE.md)</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> даём агенту постоянные правила через
+              <code>CLAUDE.md</code> и работаем в режиме плана.
+              <strong>Зачем:</strong>
+              чтобы агент соблюдал конвенции без повторов и не менял лишнего.
+            </div>
+
+            <h3><span class="step-label">Шаг 1</span>Создаём CLAUDE.md</h3>
+            <pre><code># KnowledgeBot
+
+## Стек
+- Python 3.12, FastAPI, pytest
+
+## Правила для агента
+- Меняй только файлы, которые я явно назвал.
+- Не рефактори работающий код без запроса.
+- Всегда добавляй тесты для нового кода.
+- Используй type hints.
+- Перед коммитом запускай pytest.</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 2</span>Первый коммит — правила, не
+              код
+            </h3>
+            <pre><code>git init
+git add CLAUDE.md
+git commit -m "chore: add CLAUDE.md"</code></pre>
+
+            <h3><span class="step-label">Шаг 3</span>Режим плана</h3>
+            <pre><code>Промпт агенту:
+"Plan: предложи структуру проекта KnowledgeBot по спецификации.
+Файлы пока не создавай — покажи план."</code></pre>
+            <div class="note">
+              Стоимость плохого плана — ноль. Стоимость плохого исполнения —
+              грязный diff. Сначала план.
+            </div>
+
+            <h3>
+              <span class="step-label">Шаг 4</span>Ограниченная реализация
+            </h3>
+            <pre><code>Промпт:
+"Создай ТОЛЬКО app/main.py с эндпойнтом POST /ask (заглушка) и
+tests/test_ask.py. Другие файлы не трогай."</code></pre>
+
+            <h3><span class="step-label">Шаг 5</span>Проверка памяти</h3>
+            <pre><code>Закройте и снова откройте агента в папке проекта, спросите:
+"Какие у тебя правила по этому проекту?"
+Агент должен пересказать содержимое CLAUDE.md.</code></pre>
+            <div class="note">
+              <b>Вывод:</b> <code>CLAUDE.md</code> — постоянная память проекта;
+              правила задаются один раз и применяются в каждой сессии.
+            </div>
+          </article>
+
+          <!-- 3.3 -->
+          <article class="task" id="t3">
+            <span class="chip">Задание 3.3</span>
+            <h2>Spec-driven development</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> сначала пишем спецификацию, затем
+              агент реализует по ней. <strong>Зачем:</strong> чёткая спека =
+              предсказуемый код и готовые критерии приёмки.
+            </div>
+
+            <h3><span class="step-label">Шаг 1</span>Пишем спецификацию</h3>
+            <pre><code># spec/ask-endpoint.md
+## Фича: POST /ask
+Вход:  {"question": string, непустая}
+Выход: {"answer": string, "sources": string[]}
+Правила:
+- Пустой вопрос -> HTTP 422.
+- Длина вопроса &lt;= 500 символов.
+- sources пока всегда [].
+Критерии приёмки:
+- Тест на успешный ответ.
+- Тест на пустой вопрос (422).
+- Тест на слишком длинный вопрос (422).</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 2</span>Агент строит план по спеке
+            </h3>
+            <pre><code>Промпт:
+"Прочитай spec/ask-endpoint.md. Plan: какие файлы и тесты нужны,
+чтобы выполнить все критерии приёмки? Код не пиши."</code></pre>
+
+            <h3><span class="step-label">Шаг 3</span>Реализация валидации</h3>
+            <pre><code>from fastapi import FastAPI
+from pydantic import BaseModel, Field
+
+app = FastAPI()
+
+class AskRequest(BaseModel):
+    question: str = Field(min_length=1, max_length=500)
+
+class AskResponse(BaseModel):
+    answer: str
+    sources: list[str]
+
+@app.post("/ask", response_model=AskResponse)
+def ask(req: AskRequest) -> AskResponse:
+    return AskResponse(answer=f"Заглушка: {req.question}", sources=[])</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 4</span>Тесты по критериям приёмки
+            </h3>
+            <pre><code>from fastapi.testclient import TestClient
+from app.main import app
+client = TestClient(app)
+
+def test_ok():
+    assert client.post("/ask", json={"question": "привет"}).status_code == 200
+
+def test_empty():
+    assert client.post("/ask", json={"question": ""}).status_code == 422
+
+def test_too_long():
+    assert client.post("/ask", json={"question": "x" * 501}).status_code == 422</code></pre>
+
+            <h3><span class="step-label">Шаг 5</span>Приёмка</h3>
+            <pre><code>pytest -q
+# все три теста должны пройти — спецификация выполнена</code></pre>
+            <div class="note">
+              <b>Вывод:</b> спека даёт агенту цель и одновременно критерии
+              проверки. Код «готов», когда зелёные тесты по приёмке.
+            </div>
+          </article>
+
+          <!-- 3.4 -->
+          <article class="task" id="t4">
+            <span class="chip">Задание 3.4</span>
+            <h2>Проверка вывода агента</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> намеренно ловим ошибку в коде агента.
+              <strong> Зачем:</strong> AI-код выглядит правильным чаще, чем
+              является им; чтение diff — обязательный навык.
+            </div>
+
+            <h3>
+              <span class="step-label">Шаг 1</span>Просим нетривиальную функцию
+            </h3>
+            <pre><code>Промпт агенту:
+"Реализуй функцию paginate(items, page, per_page), которая
+возвращает срез страницы. Страницы нумеруются с 1."</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 2</span>Типичный ответ агента (с
+              багом)
+            </h3>
+            <pre><code>def paginate(items, page, per_page):
+    start = page * per_page          # БАГ: при page=1 пропускает первую страницу
+    end = start + per_page
+    return items[start:end]</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 3</span>Читаем diff и находим ошибку
+            </h3>
+            <pre><code>git diff
+# Вопрос к себе: при page=1 и per_page=10 start=10 -> это уже вторая страница.
+# Off-by-one: нумерация с 1 не учтена.</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 4</span>Исправляем и покрываем тестом
+            </h3>
+            <pre><code>def paginate(items, page, per_page):
+    start = (page - 1) * per_page    # исправлено
+    return items[start:start + per_page]
+
+def test_first_page():
+    assert paginate(list(range(30)), 1, 10) == list(range(0, 10))
+def test_second_page():
+    assert paginate(list(range(30)), 2, 10) == list(range(10, 20))</code></pre>
+
+            <h3><span class="step-label">Шаг 5</span>Дисциплина коммитов</h3>
+            <pre><code>git add -A
+git commit -m "fix: off-by-one in paginate, add tests"</code></pre>
+            <div class="note">
+              <b>Вывод:</b> коммитьте до сессии агента, читайте весь diff,
+              запускайте тесты сами — не доверяйте фразе «готово».
+            </div>
+          </article>
+
+          <!-- 3.5 -->
+          <article class="task" id="t5">
+            <span class="chip">Задание 3.5</span>
+            <h2>Свои команды и structured vibe coding</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> оформляем повторяемый промпт в
+              команду <code>/review</code>. <strong>Зачем:</strong> то, что вы
+              печатаете чаще двух раз, должно стать переиспользуемой командой
+              для всей команды.
+            </div>
+
+            <h3><span class="step-label">Шаг 1</span>Создаём команду</h3>
+            <pre><code># .claude/commands/review.md
+Проверь последние изменения. Найди:
+- отсутствующие или неполные тесты;
+- забытые print/console.log;
+- захардкоженные значения вместо переменных окружения;
+- функции длиннее 30 строк;
+- отсутствие валидации на новых эндпойнтах.
+Выведи нумерованный список, пометь [MUST FIX] / [SHOULD FIX] / [SUGGESTION].</code></pre>
+
+            <h3><span class="step-label">Шаг 2</span>Запускаем</h3>
+            <pre><code>/review</code></pre>
+
+            <h3><span class="step-label">Шаг 3</span>Уточняем под себя</h3>
+            <pre><code>Если вывод слишком общий — добавьте в команду:
+"Игнорируй тестовые файлы и комментарии. Указывай файл и строку."</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 4</span>Structured vibe coding — цикл
+            </h3>
+            <pre><code>Повторяемый цикл для каждой фичи:
+1. Спека (3.3)       -> что строим и критерии
+2. Plan              -> агент показывает план
+3. Ограниченная область -> только нужные файлы
+4. /review           -> своя проверка
+5. Тесты + diff      -> ручная верификация
+6. Commit            -> атомарный коммит</code></pre>
+
+            <h3><span class="step-label">Шаг 5</span>Фиксируем workflow</h3>
+            <pre><code># WORKFLOW.md
+Каждая фича проходит цикл: spec -> plan -> scoped edit -> /review -> tests -> commit.
+Первый коммит проекта — CLAUDE.md, не исходный код.</code></pre>
+            <div class="note">
+              <b>Итог модуля:</b> у вас есть каркас сервиса и, что важнее,
+              воспроизводимый процесс работы с агентом. В модуле 4 научимся
+              измерять качество его ответов.
+            </div>
+          </article>
+
+          <div class="pager">
+            <a href="module2.html"
+              ><div class="dir">← Назад</div>
+              <div class="ttl">Модуль 2. Prompt</div></a
+            >
+            <a class="next" href="module4.html"
+              ><div class="dir">Дальше →</div>
+              <div class="ttl">Модуль 4. Evals и tracing</div></a
+            >
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <footer class="site-footer">
+      <div class="container">AI Upskilling · Модуль 3 · KnowledgeBot</div>
+    </footer>
+    <script src="app.js"></script>
+  </body>
+</html>

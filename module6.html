@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Модуль 6 — Tools и MCP</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <div class="container">
+        <span class="brand"><a href="index.html">← AI Upskilling</a></span>
+        <nav>
+          <a href="#t1">6.1</a>
+          <a href="#t2">6.2</a>
+          <a href="#t3">6.3</a>
+          <a href="#t4">6.4</a>
+          <a href="#t5">6.5</a>
+        </nav>
+      </div>
+    </div>
+
+    <div class="container">
+      <section class="module-hero">
+        <span class="num">Модуль 6</span>
+        <h1>Tools и MCP</h1>
+        <p>
+          До сих пор бот только отвечал. Теперь он начнёт действовать: искать в
+          базе, создавать тикеты, проверять статус. Вы освоите tool calling,
+          безопасный вызов инструментов и стандарт MCP (Model Context Protocol).
+        </p>
+        <div class="note">
+          Опора на <code>llm_client.py</code> и RAG из модуля 5. Для MCP:
+          <code>pip install mcp</code>.
+        </div>
+      </section>
+
+      <div class="layout">
+        <aside class="toc">
+          <h4>Задания модуля</h4>
+          <ol>
+            <li><a href="#t1">Tool calling</a></li>
+            <li><a href="#t2">Несколько инструментов</a></li>
+            <li><a href="#t3">Безопасный вызов</a></li>
+            <li><a href="#t4">MCP: свой сервер</a></li>
+            <li><a href="#t5">MCP: подключение</a></li>
+          </ol>
+        </aside>
+
+        <main>
+          <!-- 6.1 -->
+          <article class="task" id="t1">
+            <span class="chip">Задание 6.1</span>
+            <h2>Tool calling</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> даём модели одну функцию и позволяем
+              ей решить, когда её вызвать. <strong>Зачем:</strong> это переход
+              от «текста» к «действию» — модель выбирает инструмент, но
+              выполняет его ваш код.
+            </div>
+
+            <h3><span class="step-label">Шаг 1</span>Обычная функция</h3>
+            <pre><code>def get_ticket_status(ticket_id: str) -> str:
+    fake = {"T-1": "open", "T-2": "resolved"}
+    return fake.get(ticket_id, "not found")</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 2</span>Описание инструмента для
+              модели
+            </h3>
+            <pre><code>TOOLS = [{
+    "type": "function",
+    "function": {
+        "name": "get_ticket_status",
+        "description": "Вернуть статус тикета по его id",
+        "parameters": {
+            "type": "object",
+            "properties": {"ticket_id": {"type": "string"}},
+            "required": ["ticket_id"],
+        },
+    },
+}]</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 3</span>Первый вызов — модель просит
+              инструмент
+            </h3>
+            <pre><code>import json
+from openai import OpenAI
+client = OpenAI()
+
+messages = [{"role": "user", "content": "Какой статус у тикета T-1?"}]
+r = client.chat.completions.create(
+    model="gpt-4o-mini", messages=messages, tools=TOOLS)
+msg = r.choices[0].message
+print(msg.tool_calls)   # модель вернула запрос на вызов функции</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 4</span>Выполняем и возвращаем
+              результат
+            </h3>
+            <pre><code>messages.append(msg)
+for call in msg.tool_calls:
+    args = json.loads(call.function.arguments)
+    result = get_ticket_status(**args)     # выполняет НАШ код, не модель
+    messages.append({"role": "tool", "tool_call_id": call.id,
+                     "content": result})
+
+final = client.chat.completions.create(model="gpt-4o-mini", messages=messages)
+print(final.choices[0].message.content)</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 5</span>Когда инструмент не нужен
+            </h3>
+            <pre><code>r = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": "Привет, как дела?"}],
+    tools=TOOLS)
+print(r.choices[0].message.tool_calls)   # None — модель отвечает текстом</code></pre>
+            <div class="note">
+              <b>Вывод:</b> модель лишь предлагает вызов с аргументами; решение
+              выполнять — за вашим кодом.
+            </div>
+          </article>
+
+          <!-- 6.2 -->
+          <article class="task" id="t2">
+            <span class="chip">Задание 6.2</span>
+            <h2>Несколько инструментов и маршрутизация</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> добавляем поиск и создание тикета,
+              строим общий цикл. <strong>Зачем:</strong> реальному агенту нужно
+              выбирать из нескольких инструментов и вызывать их по цепочке.
+            </div>
+
+            <h3><span class="step-label">Шаг 1</span>Набор инструментов</h3>
+            <pre><code>TICKETS: dict = {}
+
+def search_kb(query: str) -> str:
+    return f"Найдено в базе по запросу '{query}'"
+
+def create_ticket(title: str, priority: str = "medium") -> str:
+    tid = f"T-{len(TICKETS) + 1}"
+    TICKETS[tid] = {"title": title, "priority": priority, "status": "open"}
+    return tid
+
+FUNCS = {"search_kb": search_kb, "create_ticket": create_ticket,
+         "get_ticket_status": get_ticket_status}</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 2</span>Описания всех инструментов
+            </h3>
+            <pre><code>TOOLS = [
+    {"type": "function", "function": {
+        "name": "search_kb", "description": "Поиск по базе знаний",
+        "parameters": {"type": "object",
+            "properties": {"query": {"type": "string"}}, "required": ["query"]}}},
+    {"type": "function", "function": {
+        "name": "create_ticket", "description": "Создать тикет поддержки",
+        "parameters": {"type": "object", "properties": {
+            "title": {"type": "string"},
+            "priority": {"type": "string", "enum": ["low", "medium", "high"]}},
+            "required": ["title"]}}},
+    {"type": "function", "function": {
+        "name": "get_ticket_status", "description": "Статус тикета",
+        "parameters": {"type": "object",
+            "properties": {"ticket_id": {"type": "string"}},
+            "required": ["ticket_id"]}}},
+]</code></pre>
+
+            <h3><span class="step-label">Шаг 3</span>Единый цикл агента</h3>
+            <pre><code>def agent(user_msg: str) -> str:
+    messages = [{"role": "user", "content": user_msg}]
+    for _ in range(5):                       # ограничиваем число шагов
+        r = client.chat.completions.create(
+            model="gpt-4o-mini", messages=messages, tools=TOOLS)
+        msg = r.choices[0].message
+        if not msg.tool_calls:
+            return msg.content               # финальный ответ
+        messages.append(msg)
+        for call in msg.tool_calls:
+            args = json.loads(call.function.arguments)
+            result = FUNCS[call.function.name](**args)
+            messages.append({"role": "tool", "tool_call_id": call.id,
+                             "content": str(result)})
+    return "Превышено число шагов."</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 4</span>Проверяем маршрутизацию
+            </h3>
+            <pre><code>print(agent("Создай тикет: не открывается отчёт"))
+print(agent("Какой статус у T-1?"))</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 5</span>Цепочка из двух инструментов
+            </h3>
+            <pre><code>print(agent("Найди в базе про отпуск и заведи тикет на обновление статьи"))
+print("Созданные тикеты:", TICKETS)</code></pre>
+            <div class="note">
+              <b>Вывод:</b> цикл «запрос → вызовы инструментов → результаты →
+              ответ» — ядро любого tool-агента. Лимит шагов защищает от
+              бесконечных циклов.
+            </div>
+          </article>
+
+          <!-- 6.3 -->
+          <article class="task" id="t3">
+            <span class="chip">Задание 6.3</span>
+            <h2>Безопасный вызов инструментов</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> добавляем валидацию, allowlist и
+              подтверждение опасных действий. <strong>Зачем:</strong> модель не
+              должна бесконтрольно выполнять операции, меняющие данные.
+            </div>
+
+            <h3><span class="step-label">Шаг 1</span>Allowlist инструментов</h3>
+            <pre><code>ALLOWED = {"search_kb", "create_ticket", "get_ticket_status"}
+
+def guard_name(name: str):
+    if name not in ALLOWED:
+        raise PermissionError(f"Инструмент '{name}' запрещён")</code></pre>
+
+            <h3><span class="step-label">Шаг 2</span>Валидация аргументов</h3>
+            <pre><code>def validate_create(args: dict):
+    title = args.get("title", "")
+    if not title or len(title) &gt; 200:
+        raise ValueError("Некорректный title")
+    if args.get("priority", "medium") not in {"low", "medium", "high"}:
+        raise ValueError("Некорректный priority")</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 3</span>Подтверждение опасных
+              операций
+            </h3>
+            <pre><code>def needs_confirmation(name: str, args: dict) -> bool:
+    return name == "create_ticket" and args.get("priority") == "high"
+
+def confirm(name: str, args: dict) -> bool:
+    # в реальном UI — кнопка; здесь имитируем ручное согласие
+    print(f"Подтвердите действие {name} {args} (y/n)")
+    return input().strip().lower() == "y"</code></pre>
+
+            <h3><span class="step-label">Шаг 4</span>Безопасный исполнитель</h3>
+            <pre><code>def safe_execute(name: str, args: dict) -> str:
+    guard_name(name)
+    if name == "create_ticket":
+        validate_create(args)
+    if needs_confirmation(name, args) and not confirm(name, args):
+        return "Действие отменено пользователем."
+    return str(FUNCS[name](**args))</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 5</span>Встраиваем в цикл агента
+            </h3>
+            <pre><code># в цикле из 6.2 замените вызов FUNCS[...] на:
+#   result = safe_execute(call.function.name, args)
+print(safe_execute("create_ticket", {"title": "Срочно", "priority": "high"}))
+print(safe_execute("delete_db", {}))   # поднимет PermissionError</code></pre>
+            <div class="note">
+              <b>Вывод:</b> allowlist + валидация + подтверждение — минимальный
+              безопасный контур для tool-агента. Подробнее о безопасности — в
+              модуле 8.
+            </div>
+          </article>
+
+          <!-- 6.4 -->
+          <article class="task" id="t4">
+            <span class="chip">Задание 6.4</span>
+            <h2>MCP: свой сервер</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> выносим инструменты в отдельный
+              MCP-сервер. <strong> Зачем:</strong> MCP — стандарт, по которому
+              любой агент (Claude Code, Cursor и др.) может подключать ваши
+              инструменты без переписывания.
+            </div>
+
+            <h3><span class="step-label">Шаг 1</span>Минимальный MCP-сервер</h3>
+            <pre><code># файл: kb_mcp_server.py
+from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP("knowledgebot")
+
+@mcp.tool()
+def search_kb(query: str) -> str:
+    """Поиск по базе знаний KnowledgeBot."""
+    return f"Найдено по '{query}'"</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 2</span>Добавляем инструмент тикетов
+            </h3>
+            <pre><code>_TICKETS: dict = {}
+
+@mcp.tool()
+def create_ticket(title: str, priority: str = "medium") -> str:
+    """Создать тикет поддержки и вернуть его id."""
+    tid = f"T-{len(_TICKETS) + 1}"
+    _TICKETS[tid] = {"title": title, "priority": priority, "status": "open"}
+    return tid</code></pre>
+
+            <h3><span class="step-label">Шаг 3</span>Запуск сервера</h3>
+            <pre><code>if __name__ == "__main__":
+    mcp.run()   # сервер общается по протоколу MCP (stdio)</code></pre>
+            <pre><code>python kb_mcp_server.py</code></pre>
+
+            <h3><span class="step-label">Шаг 4</span>Регистрация в агенте</h3>
+            <pre><code>// пример записи в конфиге MCP-клиента (напр. Claude Code)
+{
+  "mcpServers": {
+    "knowledgebot": {
+      "command": "python",
+      "args": ["kb_mcp_server.py"]
+    }
+  }
+}</code></pre>
+
+            <h3><span class="step-label">Шаг 5</span>Проверка</h3>
+            <pre><code>В агенте спросите:
+"Через knowledgebot создай тикет 'Обновить FAQ про отпуск'."
+Агент вызовет инструмент create_ticket на вашем MCP-сервере.</code></pre>
+            <div class="note">
+              <b>Вывод:</b> описав инструмент один раз как MCP-сервер, вы
+              делаете его доступным любому MCP-совместимому агенту.
+            </div>
+          </article>
+
+          <!-- 6.5 -->
+          <article class="task" id="t5">
+            <span class="chip">Задание 6.5</span>
+            <h2>MCP: подключение к реальной системе</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> подключаем готовый GitHub MCP и
+              управляем задачами из агента. <strong>Зачем:</strong> ценность MCP
+              — в доступе к настоящим системам (GitHub, Jira, БД) без своей
+              интеграции.
+            </div>
+
+            <h3><span class="step-label">Шаг 1</span>Подключаем GitHub MCP</h3>
+            <pre><code>{
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": { "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}" }
+    }
+  }
+}</code></pre>
+            <div class="note">
+              Токен берётся из переменной окружения — не вписывайте его в конфиг
+              напрямую (см. модуль 8).
+            </div>
+
+            <h3>
+              <span class="step-label">Шаг 2</span>Читаем issues из агента
+            </h3>
+            <pre><code>Промпт агенту:
+"Покажи открытые issues в моём репозитории knowledgebot."</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 3</span>Создаём задачи по
+              спецификации
+            </h3>
+            <pre><code>Промпт:
+"Создай 3 issue по нереализованным фичам из spec/: RAG, tools, security."</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 4</span>Свой MCP + внешний MCP вместе
+            </h3>
+            <pre><code>Промпт:
+"Через knowledgebot создай тикет на баг, затем через github заведи issue
+с тем же заголовком и дай ссылку."</code></pre>
+
+            <h3><span class="step-label">Шаг 5</span>Безопасность доступа</h3>
+            <pre><code>Чек-лист перед подключением внешнего MCP:
+- выдан минимальный scope токена (только нужные права);
+- токен — в переменной окружения, не в конфиге;
+- опасные действия требуют подтверждения;
+- логируются все вызовы инструментов.</code></pre>
+            <div class="note">
+              <b>Итог модуля:</b> KnowledgeBot умеет действовать — локально и во
+              внешних системах через MCP. В модуле 7 соберём из этого
+              управляемый многошаговый workflow.
+            </div>
+          </article>
+
+          <div class="pager">
+            <a href="module5.html"
+              ><div class="dir">← Назад</div>
+              <div class="ttl">Модуль 5. RAG</div></a
+            >
+            <a class="next" href="module7.html"
+              ><div class="dir">Дальше →</div>
+              <div class="ttl">Модуль 7. Workflows и агенты</div></a
+            >
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <footer class="site-footer">
+      <div class="container">AI Upskilling · Модуль 6 · KnowledgeBot</div>
+    </footer>
+    <script src="app.js"></script>
+  </body>
+</html>

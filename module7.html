@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Модуль 7 — Workflows, агенты и состояние</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <div class="container">
+        <span class="brand"><a href="index.html">← AI Upskilling</a></span>
+        <nav>
+          <a href="#t1">7.1</a>
+          <a href="#t2">7.2</a>
+          <a href="#t3">7.3</a>
+          <a href="#t4">7.4</a>
+          <a href="#t5">7.5</a>
+        </nav>
+      </div>
+    </div>
+
+    <div class="container">
+      <section class="module-hero">
+        <span class="num">Модуль 7</span>
+        <h1>Workflows, агенты и состояние</h1>
+        <p>
+          Отдельные ответы и вызовы инструментов пора собрать в управляемый
+          конвейер: классификация → поиск → ответ → проверка уверенности →
+          эскалация человеку. Вы научитесь хранить состояние, память и
+          ветвления, а затем перенесёте всё в LangGraph.
+        </p>
+        <div class="note">
+          Опирается на RAG (модуль 5) и tools (модуль 6). Для финального шага:
+          <code>pip install langgraph</code>.
+        </div>
+      </section>
+
+      <div class="layout">
+        <aside class="toc">
+          <h4>Задания модуля</h4>
+          <ol>
+            <li><a href="#t1">Workflow против agent</a></li>
+            <li><a href="#t2">Управление состоянием</a></li>
+            <li><a href="#t3">Ветвления и эскалация</a></li>
+            <li><a href="#t4">Память агента</a></li>
+            <li><a href="#t5">Реализация на LangGraph</a></li>
+          </ol>
+        </aside>
+
+        <main>
+          <!-- 7.1 -->
+          <article class="task" id="t1">
+            <span class="chip">Задание 7.1</span>
+            <h2>Workflow против agent</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> реализуем один сценарий двумя
+              способами — жёстким workflow и свободным агентом.
+              <strong>Зачем:</strong> понять, когда нужна предсказуемая
+              последовательность, а когда — автономия.
+            </div>
+
+            <h3>
+              <span class="step-label">Шаг 1</span>Workflow — фиксированные шаги
+            </h3>
+            <pre><code>def workflow(question: str) -> str:
+    category = classify(question)      # шаг 1 (детерминирован)
+    docs = retrieve(question)          # шаг 2
+    return generate(question, docs)    # шаг 3
+
+# порядок всегда один и тот же — легко тестировать и предсказывать</code></pre>
+
+            <h3><span class="step-label">Шаг 2</span>Заглушки шагов</h3>
+            <pre><code>def classify(q: str) -> str:
+    return "account" if "парол" in q.lower() else "other"
+
+def retrieve(q: str) -> list[str]:
+    return ["account.md"] if "парол" in q.lower() else []
+
+def generate(q: str, docs: list[str]) -> str:
+    return "Сбросьте пароль по ссылке из письма." if docs else "Нет данных."</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 3</span>Agent — сам выбирает шаги
+            </h3>
+            <pre><code># агент из модуля 6.2 сам решает, искать ли, звать ли инструмент
+answer = agent("Не приходит письмо для сброса пароля, заведи тикет если нужно")
+print(answer)</code></pre>
+
+            <h3><span class="step-label">Шаг 4</span>Сравниваем свойства</h3>
+            <table>
+              <tr>
+                <th></th>
+                <th>Workflow</th>
+                <th>Agent</th>
+              </tr>
+              <tr>
+                <td>Предсказуемость</td>
+                <td>высокая</td>
+                <td>ниже</td>
+              </tr>
+              <tr>
+                <td>Гибкость</td>
+                <td>низкая</td>
+                <td>высокая</td>
+              </tr>
+              <tr>
+                <td>Отладка</td>
+                <td>простая</td>
+                <td>сложнее</td>
+              </tr>
+              <tr>
+                <td>Когда применять</td>
+                <td>известный процесс</td>
+                <td>открытая задача</td>
+              </tr>
+            </table>
+
+            <h3><span class="step-label">Шаг 5</span>Гибрид</h3>
+            <pre><code># Практика: жёсткий каркас workflow, а внутри отдельных шагов — локальная автономия.
+def hybrid(question: str) -> str:
+    docs = retrieve(question)          # детерминированный поиск
+    if not docs:
+        return agent(question)         # сложный случай — отдаём агенту
+    return generate(question, docs)</code></pre>
+            <div class="note">
+              <b>Вывод:</b> большинство продакшн-систем — гибрид: предсказуемый
+              каркас с точечной автономией.
+            </div>
+          </article>
+
+          <!-- 7.2 -->
+          <article class="task" id="t2">
+            <span class="chip">Задание 7.2</span>
+            <h2>Управление состоянием</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> вводим объект состояния, который
+              проходит через все шаги. <strong>Зачем:</strong> шагам нужно
+              передавать данные друг другу явно и прозрачно для отладки.
+            </div>
+
+            <h3><span class="step-label">Шаг 1</span>Описываем состояние</h3>
+            <pre><code>from dataclasses import dataclass, field
+
+@dataclass
+class State:
+    question: str
+    category: str | None = None
+    docs: list = field(default_factory=list)
+    answer: str | None = None
+    confidence: float = 0.0
+    needs_human: bool = False</code></pre>
+
+            <h3><span class="step-label">Шаг 2</span>Шаги меняют состояние</h3>
+            <pre><code>def step_classify(s: State) -> State:
+    s.category = "account" if "парол" in s.question.lower() else "other"
+    return s
+
+def step_retrieve(s: State) -> State:
+    s.docs = ["account.md"] if s.category == "account" else []
+    return s</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 3</span>Генерация с оценкой
+              уверенности
+            </h3>
+            <pre><code>def step_generate(s: State) -> State:
+    if s.docs:
+        s.answer = "Сбросьте пароль по ссылке из письма."
+        s.confidence = 0.9
+    else:
+        s.answer = None
+        s.confidence = 0.2
+    return s</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 4</span>Прогоняем состояние через
+              конвейер
+            </h3>
+            <pre><code>def run(question: str) -> State:
+    s = State(question=question)
+    for step in (step_classify, step_retrieve, step_generate):
+        s = step(s)
+        print("after", step.__name__, "->", s)   # видно эволюцию состояния
+    return s
+
+run("Не приходит письмо для сброса пароля")</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 5</span>Состояние как лог отладки
+            </h3>
+            <pre><code>final = run("Вопрос без ответа в базе")
+print("confidence:", final.confidence, "answer:", final.answer)</code></pre>
+            <div class="note">
+              <b>Вывод:</b> явное состояние = прозрачность. В любой момент
+              видно, что уже известно и чего не хватает.
+            </div>
+          </article>
+
+          <!-- 7.3 -->
+          <article class="task" id="t3">
+            <span class="chip">Задание 7.3</span>
+            <h2>Ветвления и эскалация</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> добавляем решение «ответить или
+              передать человеку». <strong>Зачем:</strong> не каждую задачу можно
+              и нужно закрывать автоматически — важен безопасный выход.
+            </div>
+
+            <h3><span class="step-label">Шаг 1</span>Узел принятия решения</h3>
+            <pre><code>def step_decide(s: State) -> State:
+    if s.confidence &lt; 0.5:
+        s.needs_human = True
+        s.answer = "Передаю обращение оператору."
+    return s</code></pre>
+
+            <h3><span class="step-label">Шаг 2</span>Конвейер с ветвлением</h3>
+            <pre><code>def run(question: str) -> State:
+    s = State(question=question)
+    for step in (step_classify, step_retrieve, step_generate, step_decide):
+        s = step(s)
+    return s</code></pre>
+
+            <h3><span class="step-label">Шаг 3</span>Проверяем обе ветки</h3>
+            <pre><code>ok = run("Не приходит письмо для сброса пароля")
+esc = run("Хочу узнать про слияние компаний")
+print("auto:", ok.needs_human, "|", ok.answer)
+print("escalated:", esc.needs_human, "|", esc.answer)</code></pre>
+
+            <h3><span class="step-label">Шаг 4</span>Очередь к человеку</h3>
+            <pre><code>HUMAN_QUEUE: list[dict] = []
+
+def maybe_escalate(s: State):
+    if s.needs_human:
+        HUMAN_QUEUE.append({"question": s.question, "category": s.category})
+
+maybe_escalate(esc)
+print("В очереди к оператору:", HUMAN_QUEUE)</code></pre>
+
+            <h3><span class="step-label">Шаг 5</span>Тесты ветвлений</h3>
+            <pre><code>def test_auto():
+    assert run("Как сбросить пароль?").needs_human is False
+def test_escalation():
+    assert run("Непонятный редкий вопрос").needs_human is True
+test_auto(); test_escalation()
+print("Ветвления корректны.")</code></pre>
+            <div class="note">
+              <b>Вывод:</b> порог уверенности + эскалация — безопасный
+              «аварийный выход» агента к человеку.
+            </div>
+          </article>
+
+          <!-- 7.4 -->
+          <article class="task" id="t4">
+            <span class="chip">Задание 7.4</span>
+            <h2>Память агента</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> добавляем краткосрочную (диалог) и
+              долгосрочную (профиль) память. <strong>Зачем:</strong> агент
+              должен помнить контекст разговора и факты о пользователе между
+              сессиями.
+            </div>
+
+            <h3>
+              <span class="step-label">Шаг 1</span>Краткосрочная память диалога
+            </h3>
+            <pre><code>class Conversation:
+    def __init__(self):
+        self.history: list[dict] = []
+    def add(self, role: str, content: str):
+        self.history.append({"role": role, "content": content})
+    def as_messages(self) -> list[dict]:
+        return self.history[-10:]     # держим только последние реплики</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 2</span>Долгосрочная память в SQLite
+            </h3>
+            <pre><code>import sqlite3
+db = sqlite3.connect("memory.db")
+db.execute("CREATE TABLE IF NOT EXISTS prefs (user TEXT, key TEXT, value TEXT)")
+
+def remember(user: str, key: str, value: str):
+    db.execute("INSERT INTO prefs VALUES (?,?,?)", (user, key, value))
+    db.commit()
+
+def recall(user: str) -> dict:
+    rows = db.execute("SELECT key, value FROM prefs WHERE user=?", (user,))
+    return {k: v for k, v in rows}</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 3</span>Сохраняем факт о пользователе
+            </h3>
+            <pre><code>remember("u1", "language", "ru")
+remember("u1", "plan", "premium")
+print(recall("u1"))</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 4</span>Используем память в ответе
+            </h3>
+            <pre><code>from llm_client import LLMClient
+bot = LLMClient()
+
+def answer_with_memory(user: str, question: str, conv: Conversation) -> str:
+    prefs = recall(user)
+    conv.add("user", question)
+    system = f"Учитывай профиль пользователя: {prefs}. Отвечай на его языке."
+    reply = bot.ask(question, system=system)
+    conv.add("assistant", reply)
+    return reply
+
+conv = Conversation()
+print(answer_with_memory("u1", "Какой у меня тариф?", conv))</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 5</span>Память против состояния
+            </h3>
+            <table>
+              <tr>
+                <th>Понятие</th>
+                <th>Живёт</th>
+                <th>Пример</th>
+              </tr>
+              <tr>
+                <td>State</td>
+                <td>в пределах одного запроса</td>
+                <td>найденные docs, confidence</td>
+              </tr>
+              <tr>
+                <td>Краткосрочная память</td>
+                <td>в пределах диалога</td>
+                <td>последние реплики</td>
+              </tr>
+              <tr>
+                <td>Долгосрочная память</td>
+                <td>между сессиями</td>
+                <td>язык, тариф, история</td>
+              </tr>
+            </table>
+            <div class="note">
+              <b>Вывод:</b> state, краткосрочная и долгосрочная память — три
+              разных уровня; путать их — частая ошибка новичков.
+            </div>
+          </article>
+
+          <!-- 7.5 -->
+          <article class="task" id="t5">
+            <span class="chip">Задание 7.5</span>
+            <h2>Реализация на LangGraph</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> переносим конвейер в граф LangGraph с
+              условным переходом к человеку. <strong>Зачем:</strong> фреймворк
+              даёт явные узлы, рёбра, визуализацию и управление состоянием из
+              коробки.
+            </div>
+
+            <h3><span class="step-label">Шаг 1</span>Состояние графа</h3>
+            <pre><code>from typing import TypedDict
+from langgraph.graph import StateGraph, END
+
+class GState(TypedDict):
+    question: str
+    docs: list
+    answer: str
+    confidence: float</code></pre>
+
+            <h3><span class="step-label">Шаг 2</span>Узлы графа</h3>
+            <pre><code>def n_retrieve(s: GState) -> GState:
+    s["docs"] = ["account.md"] if "парол" in s["question"].lower() else []
+    return s
+
+def n_generate(s: GState) -> GState:
+    if s["docs"]:
+        s["answer"], s["confidence"] = "Сбросьте пароль по ссылке.", 0.9
+    else:
+        s["answer"], s["confidence"] = "", 0.2
+    return s
+
+def n_human(s: GState) -> GState:
+    s["answer"] = "Передано оператору."
+    return s</code></pre>
+
+            <h3><span class="step-label">Шаг 3</span>Условный переход</h3>
+            <pre><code>def route(s: GState) -> str:
+    return "ok" if s["confidence"] &gt;= 0.5 else "human"</code></pre>
+
+            <h3><span class="step-label">Шаг 4</span>Собираем граф</h3>
+            <pre><code>g = StateGraph(GState)
+g.add_node("retrieve", n_retrieve)
+g.add_node("generate", n_generate)
+g.add_node("human", n_human)
+g.set_entry_point("retrieve")
+g.add_edge("retrieve", "generate")
+g.add_conditional_edges("generate", route, {"ok": END, "human": "human"})
+g.add_edge("human", END)
+app = g.compile()</code></pre>
+
+            <h3><span class="step-label">Шаг 5</span>Запуск и визуализация</h3>
+            <pre><code>print(app.invoke({"question": "Как сбросить пароль?"}))
+print(app.invoke({"question": "Редкий непонятный вопрос"}))
+# print(app.get_graph().draw_mermaid())   # схема графа в формате Mermaid</code></pre>
+            <div class="note">
+              <b>Итог модуля:</b> KnowledgeBot стал управляемым многошаговым
+              агентом с памятью и эскалацией. В модуле 8 сделаем его надёжным и
+              безопасным для прода.
+            </div>
+          </article>
+
+          <div class="pager">
+            <a href="module6.html"
+              ><div class="dir">← Назад</div>
+              <div class="ttl">Модуль 6. Tools и MCP</div></a
+            >
+            <a class="next" href="module8.html"
+              ><div class="dir">Дальше →</div>
+              <div class="ttl">Модуль 8. Надёжность</div></a
+            >
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <footer class="site-footer">
+      <div class="container">AI Upskilling · Модуль 7 · KnowledgeBot</div>
+    </footer>
+    <script src="app.js"></script>
+  </body>
+</html>

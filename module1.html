@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Модуль 1 — Основы: модели, токены и стоимость</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <div class="container">
+        <span class="brand"><a href="index.html">← AI Upskilling</a></span>
+        <nav>
+          <a href="#t1">1.1</a>
+          <a href="#t2">1.2</a>
+          <a href="#t3">1.3</a>
+          <a href="#t4">1.4</a>
+          <a href="#t5">1.5</a>
+        </nav>
+      </div>
+    </div>
+
+    <div class="container">
+      <section class="module-hero">
+        <span class="num">Модуль 1</span>
+        <h1>Основы: модели, токены и стоимость</h1>
+        <p>
+          Цель модуля — перестать воспринимать LLM как «магию» и увидеть
+          механику: модель предсказывает следующий токен, за каждый токен вы
+          платите, у каждой модели свои пределы и цена. В конце вы соберёте
+          переиспользуемый API-клиент, который станет фундаментом проекта
+          KnowledgeBot.
+        </p>
+        <div class="note">
+          Единый стек курса: <b>Python 3.12+</b>, пакет
+          <code>openai</code> (совместим с OpenAI и многими провайдерами),
+          <code>tiktoken</code> для подсчёта токенов. Локальная альтернатива без
+          оплаты — модель через <code>Ollama</code>.
+        </div>
+      </section>
+
+      <div class="layout">
+        <aside class="toc">
+          <h4>Задания модуля</h4>
+          <ol>
+            <li><a href="#t1">Как работают языковые модели</a></li>
+            <li><a href="#t2">Токены, контекст и стоимость</a></li>
+            <li><a href="#t3">Различия моделей и провайдеров</a></li>
+            <li><a href="#t4">Оптимизация расходов и контекста</a></li>
+            <li><a href="#t5">Использование LLM через API</a></li>
+          </ol>
+        </aside>
+
+        <main>
+          <!-- TASK 1.1 -->
+          <article class="task" id="t1">
+            <span class="chip">Задание 1.1</span>
+            <h2>Как работают языковые модели</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> демонстрацию предсказания следующего
+              токена. <strong> Зачем:</strong> чтобы на практике увидеть, что
+              модель не «думает» целыми фразами, а на каждом шаге выбирает
+              следующий токен из распределения вероятностей. Это объясняет и
+              галлюцинации, и влияние температуры.
+            </div>
+
+            <h3><span class="step-label">Шаг 1</span>Окружение</h3>
+            <pre><code>python -m venv .venv
+.venv\Scripts\activate
+pip install openai python-dotenv</code></pre>
+            <p>
+              Создайте файл <code>.env</code> с ключом (или настройте Ollama —
+              см. задание 1.3):
+            </p>
+            <pre><code>OPENAI_API_KEY=sk-ваш_ключ</code></pre>
+
+            <h3><span class="step-label">Шаг 2</span>Самый простой запрос</h3>
+            <pre><code>from openai import OpenAI
+from dotenv import load_dotenv
+
+load_dotenv()
+client = OpenAI()
+
+resp = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": "Небо обычно какого цвета днём?"}],
+)
+print(resp.choices[0].message.content)</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 3</span>Показать кандидатов
+              следующего токена
+            </h3>
+            <p>
+              Расширяем запрос: просим вернуть вероятности и генерируем только 1
+              токен.
+            </p>
+            <pre><code>resp = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": "Небо обычно"}],
+    max_tokens=1,
+    logprobs=True,
+    top_logprobs=5,   # топ-5 вариантов следующего токена
+)
+
+import math
+top = resp.choices[0].logprobs.content[0].top_logprobs
+for cand in top:
+    prob = math.exp(cand.logprob)          # из logprob в вероятность 0..1
+    print(f"{cand.token!r:15} {prob:6.1%}")</code></pre>
+            <div class="note">
+              Вы увидите несколько вариантов с процентами, например
+              <code>' голубого'</code> — 72%, <code>' синего'</code> — 11%. Это
+              и есть «распределение вероятностей следующего токена».
+            </div>
+
+            <h3>
+              <span class="step-label">Шаг 4</span>Генерация токен за токеном
+              вручную
+            </h3>
+            <p>
+              Собираем ответ по одному токену, подавая предыдущий результат
+              обратно — так работает модель внутри.
+            </p>
+            <pre><code>prompt = "Небо обычно"
+text = prompt
+for _ in range(6):
+    r = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": text}],
+        max_tokens=1,
+    )
+    next_token = r.choices[0].message.content
+    text += next_token
+    print(text)   # видно, как фраза растёт по одному кусочку</code></pre>
+
+            <h3><span class="step-label">Шаг 5</span>Эффект температуры</h3>
+            <pre><code>for temp in (0.0, 1.3):
+    r = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": "Придумай название для кофейни"}],
+        temperature=temp,
+    )
+    print(temp, "->", r.choices[0].message.content)</code></pre>
+            <div class="note">
+              <b>Вывод задания:</b> при <code>temperature=0</code> модель почти
+              всегда берёт самый вероятный токен (ответы стабильны), при высокой
+              температуре — выбирает менее вероятные (ответы разнообразнее, но
+              менее предсказуемы).
+            </div>
+          </article>
+
+          <!-- TASK 1.2 -->
+          <article class="task" id="t2">
+            <span class="chip">Задание 1.2</span>
+            <h2>Токены, контекстное окно и стоимость</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> счётчик токенов и калькулятор
+              стоимости. <strong> Зачем:</strong> вы платите за токены ввода и
+              вывода, а контекст конечен. Нужно уметь измерять то, за что
+              платите.
+            </div>
+
+            <h3><span class="step-label">Шаг 1</span>Считаем токены</h3>
+            <pre><code>import tiktoken
+
+enc = tiktoken.get_encoding("o200k_base")  # кодировка новых моделей OpenAI
+
+def count_tokens(text: str) -> int:
+    return len(enc.encode(text))
+
+print(count_tokens("Привет"))               # короткое слово
+print(count_tokens("Привет, как дела?"))    # больше токенов</code></pre>
+            <div class="note">
+              Токен — это не буква и не слово, а кусочек текста. Русский текст
+              обычно «дороже» по токенам, чем английский: полезно увидеть это
+              своими глазами.
+            </div>
+
+            <h3>
+              <span class="step-label">Шаг 2</span>Короткий и длинный контекст
+            </h3>
+            <pre><code>short = "Сделай краткое резюме."
+long = short + " " + ("Это тестовое предложение. " * 300)
+
+print("short:", count_tokens(short))
+print("long: ", count_tokens(long))</code></pre>
+
+            <h3><span class="step-label">Шаг 3</span>Калькулятор стоимости</h3>
+            <pre><code># Цены за 1000 токенов — ПРИМЕР. Подставьте актуальные из тарифов провайдера.
+PRICES = {
+    "gpt-4o-mini": {"in": 0.00015, "out": 0.00060},
+    "gpt-4o":      {"in": 0.00250, "out": 0.01000},
+}
+
+def estimate_cost(model: str, in_tokens: int, out_tokens: int) -> float:
+    p = PRICES[model]
+    return in_tokens / 1000 * p["in"] + out_tokens / 1000 * p["out"]
+
+print(estimate_cost("gpt-4o-mini", 1500, 300))
+print(estimate_cost("gpt-4o", 1500, 300))</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 4</span>Реальные токены из ответа API
+            </h3>
+            <pre><code>from openai import OpenAI
+client = OpenAI()
+
+r = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": long}],
+)
+u = r.choices[0].message  # сам текст
+usage = r.usage
+print("prompt:", usage.prompt_tokens,
+      "completion:", usage.completion_tokens,
+      "cost:", round(estimate_cost("gpt-4o-mini",
+              usage.prompt_tokens, usage.completion_tokens), 6))</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 5</span>Подходим к пределу контекста
+            </h3>
+            <pre><code>CONTEXT_LIMIT = 128_000   # пример окна модели
+
+def fits(text: str) -> bool:
+    used = count_tokens(text)
+    print(f"{used} / {CONTEXT_LIMIT} токенов ({used / CONTEXT_LIMIT:.1%})")
+    return used &lt; CONTEXT_LIMIT
+
+fits(long)
+fits("Это предложение. " * 20000)   # уже близко к пределу</code></pre>
+            <div class="note">
+              <b>Вывод задания:</b> всё, что вы отправляете (инструкция +
+              история + документы), занимает место в контексте и стоит денег.
+              Отсюда вытекает модуль про оптимизацию.
+            </div>
+          </article>
+
+          <!-- TASK 1.3 -->
+          <article class="task" id="t3">
+            <span class="chip">Задание 1.3</span>
+            <h2>Различия между моделями и провайдерами</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> прогоняем одинаковые вопросы через
+              несколько моделей и сравниваем. <strong>Зачем:</strong> «самая
+              мощная модель» не всегда нужна — на простой задаче дешёвая
+              отвечает не хуже, но в разы дешевле.
+            </div>
+
+            <h3><span class="step-label">Шаг 1</span>Единая обёртка вызова</h3>
+            <pre><code>import time
+from openai import OpenAI
+client = OpenAI()
+
+def ask(model: str, prompt: str) -> dict:
+    start = time.time()
+    r = client.chat.completions.create(
+        model=model,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return {
+        "model": model,
+        "answer": r.choices[0].message.content,
+        "in": r.usage.prompt_tokens,
+        "out": r.usage.completion_tokens,
+        "sec": round(time.time() - start, 2),
+    }</code></pre>
+
+            <h3><span class="step-label">Шаг 2</span>Батарея вопросов</h3>
+            <pre><code>prompts = {
+    "простой":  "Столица Японии?",
+    "рассуждение": "У Ани 3 яблока, она отдала 1 и купила 4. Сколько стало?",
+    "код": "Напиши на Python функцию is_even(n).",
+}
+models = ["gpt-4o-mini", "gpt-4o"]
+
+rows = []
+for label, p in prompts.items():
+    for m in models:
+        res = ask(m, p)
+        res["label"] = label
+        rows.append(res)</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 3</span>Таблица сравнения + стоимость
+            </h3>
+            <pre><code># переиспользуем estimate_cost и PRICES из задания 1.2
+for r in rows:
+    r["cost"] = round(estimate_cost(r["model"], r["in"], r["out"]), 6)
+
+print(f'{"задача":12}{"модель":14}{"ток.in":>7}{"ток.out":>8}{"сек":>6}{"$":>10}')
+for r in rows:
+    print(f'{r["label"]:12}{r["model"]:14}{r["in"]:7}{r["out"]:8}{r["sec"]:6}{r["cost"]:10}')</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 4</span>Другой провайдер / локальная
+              модель
+            </h3>
+            <p>
+              Та же обёртка работает с OpenAI-совместимым endpoint (например,
+              локальный Ollama) — меняется только базовый URL и ключ:
+            </p>
+            <pre><code>local = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
+
+def ask_local(model: str, prompt: str) -> dict:
+    r = local.chat.completions.create(
+        model=model,  # напр. "llama3.1"
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return {"model": model, "answer": r.choices[0].message.content}
+
+# print(ask_local("llama3.1", "Столица Японии?"))</code></pre>
+
+            <h3><span class="step-label">Шаг 5</span>Вывод в отчёт</h3>
+            <pre><code>import json
+with open("module1_models.json", "w", encoding="utf-8") as f:
+    json.dump(rows, f, ensure_ascii=False, indent=2)</code></pre>
+            <div class="note">
+              <b>Вывод задания:</b> провайдеры отличаются ценой, скоростью,
+              размером контекста и форматом API, но при совместимом SDK
+              переключение — это смена <code>base_url</code>
+              и названия модели. Выбор модели — инженерное решение, а не вопрос
+              «какая новее».
+            </div>
+          </article>
+
+          <!-- TASK 1.4 -->
+          <article class="task" id="t4">
+            <span class="chip">Задание 1.4</span>
+            <h2>Оптимизация расходов и объёма контекста</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> берём «дорогой» запрос и
+              последовательно удешевляем его, не теряя качества.
+              <strong>Зачем:</strong> это ежедневный навык при работе с
+              AI-агентами, где контекст быстро раздувается.
+            </div>
+
+            <h3>
+              <span class="step-label">Шаг 1</span>Базовая (расточительная)
+              версия
+            </h3>
+            <pre><code>document = open("big_policy.txt", encoding="utf-8").read()  # большой документ
+
+def answer_naive(question: str) -> dict:
+    prompt = f"Документ:\n{document}\n\nВопрос: {question}"
+    return ask("gpt-4o-mini", prompt)   # ask() из задания 1.3
+
+res = answer_naive("Сколько дней отпуска?")
+print(res["in"], "входных токенов")     # очень много</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 2</span>Приём 1 — отдавать только
+              нужный фрагмент
+            </h3>
+            <pre><code>def relevant_section(doc: str, keyword: str) -> str:
+    # простейший поиск абзаца по ключевому слову (полноценный поиск — в модуле 5)
+    for para in doc.split("\n\n"):
+        if keyword.lower() in para.lower():
+            return para
+    return doc[:500]
+
+def answer_scoped(question: str, keyword: str) -> dict:
+    chunk = relevant_section(document, keyword)
+    prompt = f"Фрагмент:\n{chunk}\n\nВопрос: {question}"
+    return ask("gpt-4o-mini", prompt)
+
+res2 = answer_scoped("Сколько дней отпуска?", "отпуск")
+print(res2["in"], "входных токенов")     # в десятки раз меньше</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 3</span>Приём 2 — сжимать историю
+              диалога
+            </h3>
+            <pre><code>def summarize(history: str) -> str:
+    r = ask("gpt-4o-mini", f"Сожми до 3 пунктов ключевые решения:\n{history}")
+    return r["answer"]
+
+long_history = "... длинная переписка на два часа ..."
+handoff = summarize(long_history)   # короткая выжимка вместо всей истории</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 4</span>Приём 3 — ограничивать вывод
+            </h3>
+            <pre><code>r = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": "Ответь одним словом: столица Италии?"}],
+    max_tokens=5,          # не даём модели «растекаться»
+)
+print(r.choices[0].message.content)</code></pre>
+
+            <h3><span class="step-label">Шаг 5</span>Сравнение до/после</h3>
+            <pre><code>rows = [
+    ("наивно",  res["in"],  res["out"]),
+    ("фрагмент", res2["in"], res2["out"]),
+]
+for label, i, o in rows:
+    print(f'{label:10} вход={i:6} стоимость={estimate_cost("gpt-4o-mini", i, o):.6f}')</code></pre>
+            <table>
+              <tr>
+                <th>Приём</th>
+                <th>Что экономит</th>
+                <th>Эффект</th>
+              </tr>
+              <tr>
+                <td>Точный фрагмент вместо всего документа</td>
+                <td>входные токены</td>
+                <td>в 10–500×</td>
+              </tr>
+              <tr>
+                <td>Сжатие истории (handoff)</td>
+                <td>контекст между сессиями</td>
+                <td>крупно</td>
+              </tr>
+              <tr>
+                <td>max_tokens и чёткий формат</td>
+                <td>выходные токены</td>
+                <td>средне</td>
+              </tr>
+            </table>
+            <div class="note">
+              <b>Вывод задания:</b> самый большой выигрыш даёт отправка только
+              релевантного контекста. Это прямой мостик к модулю 5 (RAG), где
+              поиск фрагментов делается правильно.
+            </div>
+          </article>
+
+          <!-- TASK 1.5 -->
+          <article class="task" id="t5">
+            <span class="chip">Задание 1.5</span>
+            <h2>Использование LLM через API</h2>
+            <div class="goal">
+              <strong>Что делаем:</strong> оборачиваем всё в переиспользуемый
+              клиент <code>LLMClient</code>. <strong>Зачем:</strong> это основа
+              KnowledgeBot — все следующие модули будут импортировать именно
+              его.
+            </div>
+
+            <h3><span class="step-label">Шаг 1</span>Класс-обёртка</h3>
+            <pre><code># файл: llm_client.py
+import time
+from openai import OpenAI
+from dotenv import load_dotenv
+
+load_dotenv()
+
+class LLMClient:
+    def __init__(self, model: str = "gpt-4o-mini", base_url: str | None = None):
+        self.model = model
+        self.client = OpenAI(base_url=base_url) if base_url else OpenAI()
+
+    def ask(self, prompt: str, system: str | None = None, **kwargs) -> str:
+        messages = []
+        if system:
+            messages.append({"role": "system", "content": system})
+        messages.append({"role": "user", "content": prompt})
+        r = self.client.chat.completions.create(
+            model=self.model, messages=messages, **kwargs
+        )
+        return r.choices[0].message.content</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 2</span>Базовый retry и таймаут
+            </h3>
+            <pre><code>    def ask_safe(self, prompt: str, retries: int = 3, **kwargs) -> str:
+        for attempt in range(retries):
+            try:
+                return self.ask(prompt, timeout=20, **kwargs)
+            except Exception as e:
+                if attempt == retries - 1:
+                    return f"[Ошибка после {retries} попыток: {e}]"
+                time.sleep(1.5 * (attempt + 1))   # нарастающая пауза</code></pre>
+            <div class="note">
+              Добавьте этот метод внутрь класса <code>LLMClient</code> (с тем же
+              отступом, что и <code>ask</code>).
+            </div>
+
+            <h3>
+              <span class="step-label">Шаг 3</span>Системный prompt и параметры
+            </h3>
+            <pre><code># использование:
+from llm_client import LLMClient
+
+bot = LLMClient()
+print(bot.ask(
+    "Объясни, что такое токен, одним предложением.",
+    system="Ты лаконичный технический наставник. Отвечай по-русски.",
+    temperature=0.3,
+))</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 4</span>Потоковый ответ (streaming)
+            </h3>
+            <pre><code>    def stream(self, prompt: str):
+        stream = self.client.chat.completions.create(
+            model=self.model,
+            messages=[{"role": "user", "content": prompt}],
+            stream=True,
+        )
+        for chunk in stream:
+            delta = chunk.choices[0].delta.content
+            if delta:
+                print(delta, end="", flush=True)</code></pre>
+
+            <h3>
+              <span class="step-label">Шаг 5</span>Проверка — это фундамент
+              проекта
+            </h3>
+            <pre><code>if __name__ == "__main__":
+    bot = LLMClient()
+    print(bot.ask_safe("Назови три цвета списком."))
+    bot.stream("Посчитай вслух от 1 до 5.")</code></pre>
+            <div class="note">
+              <b>Итог модуля:</b> вы понимаете механику токенов и стоимости и
+              имеете <code>llm_client.py</code>. В модуле 2 мы научим этот
+              клиент писать качественные prompt и возвращать строгий JSON.
+            </div>
+          </article>
+
+          <div class="pager">
+            <a href="index.html"
+              ><div class="dir">← Назад</div>
+              <div class="ttl">Все модули</div></a
+            >
+            <a class="next" href="module2.html"
+              ><div class="dir">Дальше →</div>
+              <div class="ttl">Модуль 2. Prompt и структура</div></a
+            >
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <footer class="site-footer">
+      <div class="container">AI Upskilling · Модуль 1 · KnowledgeBot</div>
+    </footer>
+    <script src="app.js"></script>
+  </body>
+</html>

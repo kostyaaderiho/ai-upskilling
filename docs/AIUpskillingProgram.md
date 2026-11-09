@@ -1,0 +1,146 @@
+Quiz questions are taken from `AI Upskilling 1.xlsx`. Q-numbers are the ordinal
+positions of the questions in that file (Q1 is the first question of module 1,
+Q91 the last question of module 8). Correct answers are kept in the spreadsheet.
+
+1. Foundations, models and cost
+   - Token Optimization for AI-Assisted SDLC (1h30)
+     - **Q1.** A developer asks Copilot to "refactor the payment module" and attaches @workspace so the agent "has everything it needs". The request consumes far more tokens than expected and the answer is unfocused. Which change gives the biggest token saving for this request?
+     - **Q2.** You worked with Claude Code on a feature for two hours, then took a 90-minute break. The session history is long, and you want to continue the same task. What is the most token-efficient way to continue?
+     - **Q3.** During a refactoring task, the agent runs `npm test` after every change. Each failed run prints thousands of lines into the conversation, and the context fills up quickly. Which technique addresses this best?
+   - LLM: Fundamentals (1h15)
+     - **Q4.** In a team discussion, a colleague says: "GPT and ChatGPT are the same thing, just different names." Which statement is correct?
+     - **Q5.** You are explaining AI terms to a new team member using two examples: a fraud-detection classifier trained on transactions, and an assistant that drafts code from a natural-language request. Which statement places these concepts correctly?
+     - **Q6.** Your phone keyboard suggests the next word as you type, and a chatbot writes a full design document from a short prompt. Both "predict the next word". What mainly makes the chatbot a *large* language model?
+   - AI/RUN Global People.Transform Bootcamp → 2. Gen AI Knowledge → 2.1 GenAI Key Concepts: Foundation & Terminology; LLM Providers & Model Landscape; Tokens, Economics & Pricing Models; Context Management (32 min)
+     - **Q7.** A developer sends the same prompt to an LLM twice and gets two different answers. They open a ticket saying the tool is broken. What is the best explanation?
+     - **Q8.** Your team runs about 500 simple requests a day (drafting short emails, formatting lists) on the most powerful reasoning model available, and the monthly AI bill is growing. According to the lesson, what is the single biggest cost lever here?
+     - **Q9.** A team wants an assistant that answers developer questions from several thousand internal wiki pages. The pages change often and are far too large to paste into a prompt. Which context approach from the lesson fits best?
+   - AI Applications Development: From API To Agents → LLMs API;
+     - No quiz questions
+   - AI Applications Development: From API To Agents → LLMs Output Tuning
+     - No quiz questions
+   - Introduction to Large Language Models (1h18)
+     - **Q10.** A model has a context length of 128K tokens. You send a 120K-token log file and ask for a detailed 20K-token analysis. What is the problem?
+     - **Q11.** Your team downloads a base model that has only been pre-trained. When you write "Summarize this text", it continues writing text in the same style instead of producing a summary. What explains this behaviour?
+     - **Q12.** With a fixed compute budget, an architect must choose between training a very large model on fewer tokens or a smaller model on many more tokens. What did the Chinchilla scaling research show?
+   - Optional: Generative AI: Introduction to Large Language Models (1h37)
+     - **Q13.** An LLM receives the prompt: "The fat cat sat on the mat because it…". To continue correctly, the model must work out whether "it" refers to the cat or the mat. Which transformer mechanism resolves this?
+     - **Q14.** Your team needs a model that classifies incoming support tickets into categories and extracts product names. It does not need to generate long text. Which transformer family fits best?
+2. Prompt, context and structured output
+   - GenAI Enablement Playbook (1h40)
+     - **Q15.** Your TypeScript project uses Winston for structured JSON logging. An AI assistant generates a new service that logs errors with `console.error()`, and the errors never reach the log aggregator. Which failure mode from the playbook does this show?
+     - **Q16.** You must rename every `User` class to `Account`, but only in the `legacy` folder, across about 50 files. Following the playbook's "Golden Mean", what is the best approach?
+     - **Q17.** A ticket says only "Add password hashing". The AI produces a different implementation each time, and reviewers disagree on what "done" means. What does the playbook's Spec-Driven Development prescribe before any code is written?
+   - Optional: Fundamentals of Prompt Engineering with Claude (1h, AWS-oriented)
+     - **Q18.** You ask Claude to review an IAM policy for security issues. The policy JSON and your instructions are mixed in one paragraph, and Claude sometimes treats parts of the policy as instructions. What is the best way to restructure the prompt?
+     - **Q19.** Claude's first answer about a troubleshooting task is accurate but far too long for your runbook. What does an iterative prompting approach suggest?
+   - AI.Delivery Program: Step Forward to AI-Native SDLC → Module 3: Prompt Engineering: Core Components of a High-Quality Prompt; Techniques; Practice (1h15)
+     - **Q20.** You prompt: "Summarize this incident report." The model returns readable prose, but your downstream script needs severity, root cause and owner as separate fields and fails to parse the answer. Which core prompt component from the module was missing?
+     - **Q21.** A model gives inconsistent answers to a multi-step estimation question. You decide to generate several independent reasoning paths for the same question and take the answer that appears most often. Which technique from the module's "must know" list is this?
+     - **Q22.** You attach a 300-page PDF specification to a chat and ask about a detail on page 212. The model misses the detail and answers vaguely. What does the module say explains this?
+   - Advanced Prompt Engineering Techniques (1h05)
+     - **Q23.** You ask a chatbot which two of the five principles of a niche framework are considered essential. It returns a correct but generic overview and never names the two principles. What is the most reliable fix?
+     - **Q24.** You need a summary of a long research article that covers every important entity, without growing in length, and you want the output as JSON for an application. Which prompting technique does this?
+     - **Q25.** You summarise an article about a folklore creature, and you know the summary must mention where the creature lives, but the first summary leaves it out. Which prompting technique solves this most simply?
+   - Context Engineering for Developers (40 min)
+     - **Q26.** A customer-support chatbot handles an hour-long troubleshooting session. By the end, it no longer remembers the details of the customer's original complaint. Which context failure mode is this?
+     - **Q27.** A developer's prompt includes last week's questions about installing packages with pip and reading a CSV file, followed by the actual request: filter rows where age is less than 30. Which technique should be applied, and how does it differ from summarisation?
+     - **Q28.** A healthcare assistant uses one shared context for general chat, patient health records and billing data. A review finds that health details can leak into unrelated answers. Which context engineering strategy addresses this?
+3. AI-assisted SDLC with coding agents
+   - AI-Assisted Engineering (2h30)
+     - **Q29.** A method that calculates a percentage of a number contains a bug: it multiplies instead of dividing. You ask an LLM to generate unit tests and paste only the code. What will happen, and how do you prevent it?
+     - **Q30.** Your Java code throws `ArrayIndexOutOfBoundsException: Index 5 out of bounds for length 5` inside `calculateSum`. You want the LLM to help fix it. Which prompt is most likely to lead to a correct fix?
+     - **Q31.** You research a new "Recover a forgotten password" feature with an LLM and now move to task decomposition. Which three parts make up task decomposition?
+   - GitHub Copilot Capabilities (1h)
+     - **Q32.** Your team wants Copilot Chat to always follow the project's conventions (test framework, naming, error-handling style) without repeating them in every prompt. What should you set up?
+     - **Q33.** You need Copilot to implement a change across several files, run the test command in the terminal, read the failures and iterate until the tests pass. Which interaction mode fits this task?
+     - **Q34.** You want Copilot's agent to read tickets from your issue tracker and use them while implementing a feature in VS Code. What enables this?
+   - AI SDLC: Cursor Basics 101 (2h15)
+     - **Q35.** Cursor's agent suggests `import { debounce } from "react";`, and the editor shows an import error. What is the best immediate response?
+     - **Q36.** You want Cursor to always answer concisely and use British spelling in every project you open on your laptop, without committing anything to a repository. Which rule type fits?
+     - **Q37.** Your team repeatedly writes the same long prompt to scaffold a new feature (controller, commands, queries, DTOs) in the same CQRS structure. What is the best approach?
+   - EngX.AI Bootcamp for Software Engineers
+     - **Q38.** An agent implemented a feature that technically works but behaves differently from what the product owner expected. The ticket said only "Allow users to export their data". What is the primary control over AI output in this situation?
+     - **Q39.** AI-generated code looks correct in review, but the team has seen subtle regressions in earlier AI changes. Which principle should guide the workflow?
+     - **Q40.** A team configures an agentic workflow that writes code, runs tests and opens pull requests automatically. Which step is a decision point that should not be delegated to AI?
+   - AI-Native SDLC and Modernization
+     - **Q41.** A project has Copilot licences for everyone, but each engineer uses AI individually with personal prompts. There is no shared configuration and no measurement. The project is stuck at L1. What is the single most important factor for moving to L2?
+     - **Q42.** Two teams use the same AI coding tool. One reports 10–15% productivity gains and the other 2–3×. What explains most of the difference?
+     - **Q43.** A delivery manager wants to prove the impact of AI adoption to a client and plans to send a survey where engineers estimate hours saved. What is the right way to measure the impact?
+   - Spec-Driven Development with GitHub Spec Kit
+     - **Q44.** You start a new project with GitHub Spec Kit and a coding agent. What is the correct order of the Spec Kit workflow?
+     - **Q45.** Your enterprise requires that all features run only on localhost, follow test-driven development and avoid unnecessary dependencies. You want the agent to respect these rules in every Spec Kit step. Where should these rules go?
+     - **Q46.** After /specify, the generated spec contains several "NEEDS CLARIFICATION" markers, for example on data persistence and on deadlines in the past. What is the right next step?
+   - Claude Code in Action by Anthropic (1h11)
+     - **Q47.** You want Claude Code to follow a few personal preferences on a shared project (for example your preferred test command), without committing them for the rest of the team. Which file should you use?
+     - **Q48.** Claude has spent a long time writing tests for one function, including a lot of back-and-forth about a missing package. You now want to test the next function in the same file and keep what Claude learned about it. Which command fits best?
+     - **Q49.** You want to prevent Claude Code from ever reading the `.env` file in your project. Which mechanism fits?
+   - Structured Vibe Coding with AI Coding Agents (1h20)
+     - **Q50.** Working with a coding agent can be organised like pair programming. Which roles should the human and the agent take?
+     - **Q51.** You want to tighten email validation on a landing page so that only addresses with specific domains (.com, .org, .edu and others) are accepted, using a coding agent. Which approach is most reliable?
+     - **Q52.** A team is choosing a stack for a new internal service that will be built mostly with coding agents. One option is the company's in-house framework; the other is TypeScript with React and Node. Which stack should the team choose?
+4. Evals and tracing
+   - Evaluating generative AI models with Amazon Nova LLM-as-a-Judge on Amazon SageMaker AI
+     - **Q53.** You are building a pipeline on Amazon SageMaker AI that automatically picks the better of two model checkpoints using Amazon Nova LLM-as-a-Judge. You are preparing the evaluation dataset in JSONL format. Which set of fields must each line of the dataset contain?
+     - **Q54.** You compared two models with Amazon Nova LLM-as-a-Judge. Model A won 16 comparisons and Model B won 10, which gives a win rate of 0.38 with a 95% confidence interval of 0.23 to 0.56. How should you interpret this result?
+   - LLM-as-a-Judge evaluation. Debugging production agents with Amazon Bedrock AgentCore Observability
+     - **Q55.** Your support agent built on Amazon Bedrock AgentCore keeps running up token costs, but the error rate on the dashboard is close to zero. In the trace view one session has 177 spans and an end-to-end latency of about 85 seconds, while normal sessions take 1-5 seconds. What is the most likely problem and the right first fix?
+     - **Q56.** Your team uses Amazon Bedrock AgentCore Evaluations with LLM-as-a-Judge evaluators. You want to continuously monitor quality on live production traffic with CloudWatch dashboards and alarms, and also score specific sessions by ID in your CI/CD pipeline. Which combination of evaluation modes fits these two needs?
+   - AI Solution Engineering: Fast Track Course -> Module 6: Evaluation and Optimization - LLM Evaluations for AI Builders.
+     - **Q57.** You are evaluating a RAG assistant that answers questions about internal policies. A reviewer notices that some answers sound fluent and plausible but contain claims that do not appear in the retrieved documents. Which evaluation metric is designed to catch this problem?
+     - **Q58.** Before releasing a customer-facing LLM assistant, you want to know how it behaves when users try to break it, for example with misleading, off-topic or prompt-injection inputs that are not in your regular test set. Which evaluation technique addresses this need?
+   - AI Observability: Monitoring and Debugging LLMs in Production
+     - **Q59.** Your LLM-based support assistant gave good answers at launch. Months later, with no code changes, answer quality has slowly degraded because user questions and the underlying data have changed over time. Which LLM failure mode does this describe?
+     - **Q60.** A team has instrumented its LLM application and can see traces, but a user reports a hallucinated answer that no alert caught, and nobody knew who should respond. What should the team add as part of its LLM ops playbook?
+5. RAG: ingestion, retrieval and evidence
+   - KDB.AI Vector Database - KX Academy
+     - **Q61.** Users of your product-search assistant often type exact SKU codes and product names, but also long natural-language descriptions. Pure vector search sometimes misses the exact codes. Which KDB.AI capability best addresses this?
+     - **Q62.** You compare the embeddings of two support tickets and want a metric that focuses on the direction of the vectors rather than their length. Which similarity metric should you choose?
+   - AI Applications Development: From API To Agents -> RAG Fundamentals.
+     - **Q63.** You are building your first RAG application with a FAISS vector store and an LLM, and you need to describe what happens when a user submits a question. Which sequence describes the RAG query flow correctly?
+   - AI Applications Development: From API To Agents -> RAG Advanced
+     - **Q64.** Your RAG application retrieves top_k = 10 chunks for every question. For off-topic questions it still passes irrelevant chunks to the LLM, which then produces misleading answers. Which retrieval tuning helps most?
+     - **Q65.** You switch to a different embedding model for user queries but keep the vectors that were indexed earlier with the old model. Retrieval quality collapses. What is the most likely reason?
+   - AI Applications Development: From API To Agents -> Grounding
+     - **Q66.** An HR assistant answers employee questions. The team wants to improve accuracy by supplying relevant context to the LLM before it answers and by checking the answer afterwards. Which statement correctly describes input and output grounding?
+   - Advanced RAG Applications with Vector Databases
+     - **Q67.** You want users to search a catalog of product photos by typing a text description, and then use the matching images as context for an LLM. Which approach fits multimodal RAG with a vector database?
+6. Tools and MCP
+   - Implementing Standardized Agent Communication Protocols with Amazon Bedrock AgentCore
+     - **Q68.** Your team has built a LangGraph agent that uses MCP tools and wants to deploy it on Amazon Bedrock AgentCore. A colleague says the agent must first be rewritten with Strands. Which response is correct?
+     - **Q69.** You are deploying an MCP server on AgentCore Runtime. Its purpose is to let an agent discover and invoke operations exposed by an external service. A teammate proposes using A2A Agent Card discovery instead. Which protocol matches the required interaction?
+   - AI Applications Development: From API To Agents -> MCP Fundamentals
+     - **Q70.** An MCP server and a CLI application run on the same laptop. The client can start the server process, and the team wants a connection that does not require a listening network endpoint. Which transport fits this setup?
+     - **Q71.** Several AI applications need access to several external services, including a Users Management Service. Each application currently maintains a separate custom integration for every service. What is the main integration benefit of adopting MCP?
+   - AI Applications Development: From API To Agents -> MCP Advanced
+     - **Q72.** An MCP client has established communication with a server. Before choosing an operation, it needs to discover which tools the server exposes rather than rely on a hardcoded list. Which request should the client send?
+     - **Q73.** A client sends a valid tools/call request. The server accepts the request and runs the selected tool, but the business operation fails. The server needs to return that execution failure to the client. Which response represents a tool execution error?
+   - Introduction to Model Context Protocol by Anthropic
+     - **Q74.** You are extending the course's document-management chatbot. A user asks the assistant to replace a paragraph in an existing document. The server has the document-update function, but the assistant cannot invoke it yet. How should this operation be exposed through MCP?
+     - **Q75.** In the course's chatbot, a user types @policy.txt in a message. The application should fetch that document and include its contents in the prompt sent to Claude. Which implementation matches the course's resource example?
+7. Workflows, agents and state
+   - AI Applications Development: From API To Agents -> Agents
+     - **Q76.** You are tasked with designing an AI Agent for a customer support chatbot that assists users in troubleshooting their smart home devices. The agent needs to perform tasks like diagnosing issues, suggesting fixes, and scheduling technician visits. During the design phase, you decide to implement an orchestration model. What is the primary role of the orchestration model in this context?
+     - **Q77.** Imagine you are observing the behavior of an AI Agent designed to assist with financial planning. A user asks the agent to calculate monthly savings based on their income and expenses. The agent retrieves the user's financial data, calls a calculation API, and then provides the result. Which key characteristic of AI Agents is most evident in this interaction?
+   - AI Applications Development: From API To Agents -> Agent Skills
+     - **Q78.** You are designing an AI Agent for a healthcare application that helps doctors manage patient records and suggest treatment plans. To ensure the agent understands the hospital's workflow, you decide to implement skills for patient record management and treatment recommendation. During testing, you notice the agent fails to trigger the patient record management skill consistently. What is the most likely reason for this issue based on best practices for agent skills?
+     - **Q79.** Imagine you are building an AI Agent for a customer support team that handles technical troubleshooting. You decide to package the troubleshooting workflow into a skill. To optimize performance, you structure the skill using progressive disclosure. Which of the following best describes how progressive disclosure enhances the agent's performance?
+   - AI Solution Engineering: Fast Track Course -> Module 3: Foundations - Introduction to LangGraph.
+     - **Q80.** You are tasked with building a multi-agent application for a healthcare system using LangGraph. The application involves multiple agents interacting to schedule patient appointments, send reminders, and analyze medical records. During the development process, you notice that certain workflows require precise control over how agents share and update their states. Which feature of LangGraph is most critical for managing this requirement?
+     - **Q81.** Imagine you are developing a customer service assistant using LangGraph. The assistant needs to handle complex workflows, such as escalating issues to human agents when it encounters ambiguous user queries. You decide to implement the "Human-in-the-Loop" feature in LangGraph to address this requirement. What is the primary advantage of integrating "Human-in-the-Loop" into your application?
+   - AI Solution Engineering: Fast Track Course -> Module 5: Memory Systems - LLMs as Operating Systems: Agent Memory.
+     - **Q82.** You are designing a virtual tutor using an LLM-based agent that helps students learn math. The agent needs to remember a student’s progress over multiple sessions, such as topics they've mastered and areas where they need improvement. You decide to implement a memory system to achieve this. Which type of memory would be most effective for tracking the student’s progress over time?
+     - **Q83.** Imagine you are building a customer support agent for an e-commerce platform. The agent needs to assist users with order tracking, product recommendations, and resolving complaints. To improve user experience, you decide to implement memory that allows the agent to recall specific details from a user's previous interactions, such as their preferred products or unresolved issues. Which type of memory is most relevant for this use case, and why?
+   - LangGraph.js: Building Agents with Javascript
+     - **Q84.** You are building a task management AI agent using LangGraph.js for a project management web application. The agent needs to break down a user’s project into smaller tasks, prioritize them, and send reminders. During the development process, you implement nodes and edges to model the agent’s workflow. What is the primary purpose of designing nodes and edges in LangGraph.js?
+8. Reliability and security
+   - AI System Design: Advanced Agentic Architectures and Optimization
+     - **Q85.** You are designing a multi-agent AI system for a supply chain management platform where agents handle inventory tracking, demand forecasting, and shipment scheduling. During testing, you notice that agents occasionally lose context when transitioning between tasks, leading to errors in decision-making. Which approach would best improve the reliability of the system in handling complex workflows?
+     - **Q86.** You are deploying an AI system for a healthcare provider that processes sensitive patient data, including medical records and appointment details. During testing, you discover that the system occasionally outputs unredacted sensitive information, which could lead to data breaches. Which strategy would best mitigate this risk while maintaining system functionality?
+   - Gen AI-Powered Application Security
+     - **Q87.** You are developing a Gen AI–powered application for a legal firm that assists with drafting contracts. During a security review, you identify potential risks such as adversarial prompting and overreliance on AI decision-making. To mitigate these challenges, you decide to implement security strategies. Which of the following strategies would best address these risks?
+     - **Q88.** You are building a Gen AI–powered virtual assistant for an e-commerce platform. Unlike traditional applications, Gen AI systems face unique challenges such as handling unpredictable user inputs and preventing data manipulation. Which security approach is most appropriate for this type of application?
+     - **Q89.** You are a developer responsible for maintaining a Gen AI–powered application that includes a fine-tuning pipeline for customizing AI models based on user-provided data. During testing, you notice that the pipeline could be exploited to inject harmful data into the system. What development practice should you implement to secure the fine-tuning pipeline?
+   - Operating AI Agents: Failure and Recovery
+     - **Q90.** You are monitoring a customer support AI system that uses multiple agents to handle user queries. During a high-traffic period, one of the agents stops responding, causing the system to fail in processing user requests. To minimize downtime, you decide to implement an automated recovery workflow. Which step is most critical in ensuring the success of the automated recovery workflow?
+     - **Q91.** You are managing a multi-agent AI system for a financial platform that processes transactions. During production, you notice that one of the agents occasionally executes incorrect calculations, leading to discrepancies in user account balances. To ensure the system remains reliable, you decide to implement a rollback mechanism. What is the primary purpose of a rollback mechanism in this scenario?

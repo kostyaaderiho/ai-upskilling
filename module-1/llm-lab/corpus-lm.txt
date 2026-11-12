@@ -1,0 +1,12 @@
+the cat sat on the mat .
+the cat sat on the sofa .
+the cat ate the fish .
+the cat ate the fish .
+the dog sat on the mat .
+the dog ate the bone .
+the dog chased the cat .
+the cat chased the mouse .
+the mouse ate the cheese .
+the cat sat on the mat .
+a cat sat on the roof .
+the dog sat on the porch .

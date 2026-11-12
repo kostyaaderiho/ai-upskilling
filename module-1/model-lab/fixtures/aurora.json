@@ -1,0 +1,26 @@
+{
+  "ok": {
+    "id": "msg_01",
+    "type": "message",
+    "role": "assistant",
+    "content": [{ "type": "text", "text": "Пароль сброшен." }],
+    "stop_reason": "end_turn",
+    "usage": { "input_tokens": 41, "output_tokens": 6 }
+  },
+  "cut": {
+    "id": "msg_02",
+    "type": "message",
+    "role": "assistant",
+    "content": [{ "type": "text", "text": "Шаг 1. Откройте настройки. Шаг 2. Выбери" }],
+    "stop_reason": "max_tokens",
+    "usage": { "input_tokens": 52, "output_tokens": 12 }
+  },
+  "refused": {
+    "id": "msg_03",
+    "type": "message",
+    "role": "assistant",
+    "content": [],
+    "stop_reason": "refusal",
+    "usage": { "input_tokens": 30, "output_tokens": 0 }
+  }
+}

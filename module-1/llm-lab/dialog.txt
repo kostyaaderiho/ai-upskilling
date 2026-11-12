@@ -1,0 +1,8 @@
+user: Hi! My name is Alex and I work as a tester.
+assistant: Nice to meet you, Alex! How can I help?
+user: Please explain what a unit test is.
+assistant: A unit test checks one small piece of code in isolation.
+user: And what is an integration test?
+assistant: It checks that several parts work together.
+user: Thanks. Now tell me about load testing.
+assistant: Load testing shows how a system behaves under heavy traffic.

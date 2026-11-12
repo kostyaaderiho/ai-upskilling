@@ -1,0 +1,19 @@
+{
+  "model": "claude-haiku-5-5",
+  "max_tokens": 300,
+  "thinking": { "type": "disabled" },
+  "tools": [
+    {
+      "name": "get_order_status",
+      "description": "Возвращает статус заказа по его номеру.",
+      "input_schema": {
+        "type": "object",
+        "properties": { "order_id": { "type": "string", "description": "Номер заказа, например A-1042" } },
+        "required": ["order_id"]
+      }
+    }
+  ],
+  "messages": [
+    { "role": "user", "content": "Где мой заказ A-1042? Проверь статус через инструмент." }
+  ]
+}

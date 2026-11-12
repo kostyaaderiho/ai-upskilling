@@ -534,3 +534,49 @@ pre.diagram .copy-btn {
     position: static;
   }
 }
+
+/* Шаблон модуля: мета-строка задания, условия, критерии, решения */
+.task .meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 4px 0 18px;
+  font-size: 0.92em;
+  color: var(--muted);
+}
+ol.cond,
+ul.cond {
+  padding-left: 1.4em;
+}
+ol.cond > li {
+  margin-bottom: 14px;
+}
+ol.cond li ol,
+ol.cond li ul {
+  margin-top: 8px;
+}
+ul.criteria {
+  list-style: none;
+  padding-left: 0;
+}
+ul.criteria li {
+  position: relative;
+  padding-left: 26px;
+  margin: 8px 0;
+}
+ul.criteria li::before {
+  content: "\2610";
+  position: absolute;
+  left: 0;
+  color: var(--accent-2);
+}
+details .body {
+  padding: 4px 0 12px;
+}
+details .body h4 {
+  margin: 18px 0 6px;
+}
+details.solution .warn {
+  color: var(--muted);
+  font-style: italic;
+}

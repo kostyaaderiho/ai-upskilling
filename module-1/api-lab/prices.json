@@ -1,0 +1,12 @@
+{
+  "models": {
+    "claude-haiku-5-5": {
+      "name": "Claude Haiku 5.5",
+      "input": 0.10,
+      "output": 0.50,
+      "note": "цены за 1 млн токенов для промптов до 100K токенов"
+    }
+  },
+  "cacheReadMult": 0.1,
+  "cacheWriteMult": 1.25
+}

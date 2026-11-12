@@ -11,11 +11,10 @@
       <div class="container">
         <span class="brand"><a href="index.html">← AI Upskilling</a></span>
         <nav>
-          <a href="#t1">1.1</a>
-          <a href="#t2">1.2</a>
-          <a href="#t3">1.3</a>
-          <a href="#t4">1.4</a>
-          <a href="#t5">1.5</a>
+          <a href="#m9">9. Токены</a>
+          <a href="#m10">10. LLM изнутри</a>
+          <a href="#m11">11. Модели и провайдеры</a>
+          <a href="#m12">12. API</a>
         </nav>
       </div>
     </div>
@@ -25,17 +24,14 @@
         <span class="num">Модуль 1</span>
         <h1>Основы: модели, токены и стоимость</h1>
         <p>
-          Цель модуля — перестать воспринимать LLM как «магию» и увидеть
-          механику: модель предсказывает следующий токен, за каждый токен вы
-          платите, у каждой модели свои пределы и цена. В конце вы соберёте
-          переиспользуемый API-клиент, который станет фундаментом проекта
-          KnowledgeBot.
+          Модуль 1 состоит из четырёх заданий — это модули 9, 10, 11 и 12
+          целиком. Каждое задание проходит по своим шагам: читаете теорию,
+          выполняете практику и отправляете файл с результатами на проверку.
         </p>
         <div class="note">
-          Единый стек курса: <b>Python 3.12+</b>, пакет
-          <code>openai</code> (совместим с OpenAI и многими провайдерами),
-          <code>tiktoken</code> для подсчёта токенов. Локальная альтернатива без
-          оплаты — модель через <code>Ollama</code>.
+          Задания используют разные инструменты: чат Claude Code, терминал,
+          Node.js и HTTP-запросы к API. Требования к окружению указаны в шагах
+          «Подготовка» каждого задания.
         </div>
       </section>
 
@@ -43,478 +39,816 @@
         <aside class="toc">
           <h4>Задания модуля</h4>
           <ol>
-            <li><a href="#t1">Как работают языковые модели</a></li>
-            <li><a href="#t2">Токены, контекст и стоимость</a></li>
-            <li><a href="#t3">Различия моделей и провайдеров</a></li>
-            <li><a href="#t4">Оптимизация расходов и контекста</a></li>
-            <li><a href="#t5">Использование LLM через API</a></li>
+            <li><a href="#m9">Оптимизация токенов: увидеть разницу своими глазами</a></li>
+            <li><a href="#m10">LLM изнутри: токены, вероятности, контекст</a></li>
+            <li><a href="#m11">Модели и провайдеры: чем они отличаются на практике</a></li>
+            <li><a href="#m12">Использование LLM через API: как параметры запроса меняют ответ</a></li>
           </ol>
         </aside>
 
         <main>
-          <!-- TASK 1.1 -->
-          <article class="task" id="t1">
-            <span class="chip">Задание 1.1</span>
-            <h2>Как работают языковые модели</h2>
-            <div class="goal">
-              <strong>Что делаем:</strong> демонстрацию предсказания следующего
-              токена. <strong> Зачем:</strong> чтобы на практике увидеть, что
-              модель не «думает» целыми фразами, а на каждом шаге выбирает
-              следующий токен из распределения вероятностей. Это объясняет и
-              галлюцинации, и влияние температуры.
-            </div>
 
-            <h3><span class="step-label">Шаг 1</span>Окружение</h3>
-            <pre><code>python -m venv .venv
-.venv\Scripts\activate
-pip install openai python-dotenv</code></pre>
+          <!-- MODULE 9 -->
+          <section class="module-block">
+            <article class="task module-head" id="m9">
+              <span class="chip">Модуль 9</span>
+              <h2>Оптимизация токенов: увидеть разницу своими глазами</h2>
             <p>
-              Создайте файл <code>.env</code> с ключом (или настройте Ollama —
-              см. задание 1.3):
+            Пять коротких заданий в чате Claude Code. В каждом вы решаете один и
+            тот же маленький баг двумя способами, меняя только одну вещь, и
+            смотрите, как меняется число токенов в контексте. Числа записываете в
+            файл <code>module-1/token-lab/results.md</code> — его и отправите на проверку.
             </p>
-            <pre><code>OPENAI_API_KEY=sk-ваш_ключ</code></pre>
-
-            <h3><span class="step-label">Шаг 2</span>Самый простой запрос</h3>
-            <pre><code>from openai import OpenAI
-from dotenv import load_dotenv
-
-load_dotenv()
-client = OpenAI()
-
-resp = client.chat.completions.create(
-    model="gpt-4o-mini",
-    messages=[{"role": "user", "content": "Небо обычно какого цвета днём?"}],
-)
-print(resp.choices[0].message.content)</code></pre>
-
-            <h3>
-              <span class="step-label">Шаг 3</span>Показать кандидатов
-              следующего токена
-            </h3>
-            <p>
-              Расширяем запрос: просим вернуть вероятности и генерируем только 1
-              токен.
-            </p>
-            <pre><code>resp = client.chat.completions.create(
-    model="gpt-4o-mini",
-    messages=[{"role": "user", "content": "Небо обычно"}],
-    max_tokens=1,
-    logprobs=True,
-    top_logprobs=5,   # топ-5 вариантов следующего токена
-)
-
-import math
-top = resp.choices[0].logprobs.content[0].top_logprobs
-for cand in top:
-    prob = math.exp(cand.logprob)          # из logprob в вероятность 0..1
-    print(f"{cand.token!r:15} {prob:6.1%}")</code></pre>
             <div class="note">
-              Вы увидите несколько вариантов с процентами, например
-              <code>' голубого'</code> — 72%, <code>' синего'</code> — 11%. Это
-              и есть «распределение вероятностей следующего токена».
+            Все промпты отправляются в <b>чат Claude Code</b>. Терминал IDE нужен
+            только для коротких команд <code>node ../lab.js …</code> и для
+            проверки тестов. Понадобится Node.js.
             </div>
+            </article>
 
-            <h3>
-              <span class="step-label">Шаг 4</span>Генерация токен за токеном
-              вручную
-            </h3>
-            <p>
-              Собираем ответ по одному токену, подавая предыдущий результат
-              обратно — так работает модель внутри.
-            </p>
-            <pre><code>prompt = "Небо обычно"
-text = prompt
-for _ in range(6):
-    r = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": text}],
-        max_tokens=1,
-    )
-    next_token = r.choices[0].message.content
-    text += next_token
-    print(text)   # видно, как фраза растёт по одному кусочку</code></pre>
+<article class="task" id="m9-prep">
+            <span class="chip">Подготовка</span>
+            <h2>Один раз перед началом</h2>
+            <p>В чате на каждом ходу в модель уходит <b>весь</b> накопленный контекст: инструкции, файл правил, переписка, прочитанные файлы, вывод команд. Чем он больше, тем дороже каждый следующий ход. Мы измеряем именно его размер.</p>
+            <ol>
+              <li>В IDE: <i>File → Open Folder…</i> → выберите <code>module-1/token-lab/sample-app</code>.</li>
+              <li>Откройте терминал (<code>Ctrl+`</code>) и выполните:
+                <pre><code>node ../lab.js reset</code></pre>
+                Должно появиться «152 успешно, 3 упало» — в проекте есть баг.
+              </li>
+              <li>Откройте <code>module-1/token-lab/results.md</code> и заполните имя, IDE и модель.</li>
+            </ol>
 
-            <h3><span class="step-label">Шаг 5</span>Эффект температуры</h3>
-            <pre><code>for temp in (0.0, 1.3):
-    r = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": "Придумай название для кофейни"}],
-        temperature=temp,
-    )
-    print(temp, "->", r.choices[0].message.content)</code></pre>
+            <h3>Как делать каждый замер</h3>
+            <ol>
+              <li><b>Сброс:</b> <code>node ../lab.js reset</code> в терминале.</li>
+              <li><b>Закройте все вкладки</b> редактора (<code>Ctrl+K</code>, затем <code>W</code>): открытые файлы тоже попадают в контекст.</li>
+              <li><b>Новый чат</b> (кнопка «+» или <code>/clear</code>) и отправьте промпт.</li>
+              <li>Когда Claude закончил — введите <code>/context</code> и запишите <b>итог (Total)</b>. Для строки с <i>Стоимость</i> введите ещё <code>/cost</code> (если денег нет — <code>—</code>).</li>
+              <li>Посчитайте <b>ходы</b>: сколько раз Claude вызвал инструмент (Read, Grep, Bash, Edit…) — это блоки в ленте чата.</li>
+              <li>Если Claude менял код: сами запустите <code>node tests/run-all.js --quiet</code> и посмотрите правку (панель Source Control).</li>
+              <li>Впишите числа и <b>одну фразу наблюдения</b> в <code>results.md</code>, сохраните и закройте вкладку.</li>
+            </ol>
             <div class="note">
-              <b>Вывод задания:</b> при <code>temperature=0</code> модель почти
-              всегда берёт самый вероятный токен (ответы стабильны), при высокой
-              температуре — выбирает менее вероятные (ответы разнообразнее, но
-              менее предсказуемы).
+              Агент недетерминирован: разница в 3–5% — шум. Если сомневаетесь, повторите запуск и укажите оба числа в заметке.
             </div>
           </article>
 
-          <!-- TASK 1.2 -->
-          <article class="task" id="t2">
-            <span class="chip">Задание 1.2</span>
-            <h2>Токены, контекстное окно и стоимость</h2>
-            <div class="goal">
-              <strong>Что делаем:</strong> счётчик токенов и калькулятор
-              стоимости. <strong> Зачем:</strong> вы платите за токены ввода и
-              вывода, а контекст конечен. Нужно уметь измерять то, за что
-              платите.
-            </div>
-
-            <h3><span class="step-label">Шаг 1</span>Считаем токены</h3>
-            <pre><code>import tiktoken
-
-enc = tiktoken.get_encoding("o200k_base")  # кодировка новых моделей OpenAI
-
-def count_tokens(text: str) -> int:
-    return len(enc.encode(text))
-
-print(count_tokens("Привет"))               # короткое слово
-print(count_tokens("Привет, как дела?"))    # больше токенов</code></pre>
-            <div class="note">
-              Токен — это не буква и не слово, а кусочек текста. Русский текст
-              обычно «дороже» по токенам, чем английский: полезно увидеть это
-              своими глазами.
-            </div>
-
-            <h3>
-              <span class="step-label">Шаг 2</span>Короткий и длинный контекст
-            </h3>
-            <pre><code>short = "Сделай краткое резюме."
-long = short + " " + ("Это тестовое предложение. " * 300)
-
-print("short:", count_tokens(short))
-print("long: ", count_tokens(long))</code></pre>
-
-            <h3><span class="step-label">Шаг 3</span>Калькулятор стоимости</h3>
-            <pre><code># Цены за 1000 токенов — ПРИМЕР. Подставьте актуальные из тарифов провайдера.
-PRICES = {
-    "gpt-4o-mini": {"in": 0.00015, "out": 0.00060},
-    "gpt-4o":      {"in": 0.00250, "out": 0.01000},
-}
-
-def estimate_cost(model: str, in_tokens: int, out_tokens: int) -> float:
-    p = PRICES[model]
-    return in_tokens / 1000 * p["in"] + out_tokens / 1000 * p["out"]
-
-print(estimate_cost("gpt-4o-mini", 1500, 300))
-print(estimate_cost("gpt-4o", 1500, 300))</code></pre>
-
-            <h3>
-              <span class="step-label">Шаг 4</span>Реальные токены из ответа API
-            </h3>
-            <pre><code>from openai import OpenAI
-client = OpenAI()
-
-r = client.chat.completions.create(
-    model="gpt-4o-mini",
-    messages=[{"role": "user", "content": long}],
-)
-u = r.choices[0].message  # сам текст
-usage = r.usage
-print("prompt:", usage.prompt_tokens,
-      "completion:", usage.completion_tokens,
-      "cost:", round(estimate_cost("gpt-4o-mini",
-              usage.prompt_tokens, usage.completion_tokens), 6))</code></pre>
-
-            <h3>
-              <span class="step-label">Шаг 5</span>Подходим к пределу контекста
-            </h3>
-            <pre><code>CONTEXT_LIMIT = 128_000   # пример окна модели
-
-def fits(text: str) -> bool:
-    used = count_tokens(text)
-    print(f"{used} / {CONTEXT_LIMIT} токенов ({used / CONTEXT_LIMIT:.1%})")
-    return used &lt; CONTEXT_LIMIT
-
-fits(long)
-fits("Это предложение. " * 20000)   # уже близко к пределу</code></pre>
-            <div class="note">
-              <b>Вывод задания:</b> всё, что вы отправляете (инструкция +
-              история + документы), занимает место в контексте и стоит денег.
-              Отсюда вытекает модуль про оптимизацию.
-            </div>
+          <!-- TASK 1 -->
+          <article class="task" id="m9-t1">
+            <span class="chip">Задание 9.1</span>
+            <h2>Точный промпт против размытого</h2>
+            <div class="goal"><strong>Зачем:</strong> понять, как формулировка запроса влияет на число ходов и размер контекста.</div>
+            <ol>
+              <li><b>1A.</b> Сделайте замер по схеме выше с промптом:
+                <pre><code>У нас что-то не так со скидками по купонам. Разберись и почини.</code></pre>
+                Пока Claude работает, смотрите, какие файлы он открывает. Запишите в строку <b>1A</b>.
+              </li>
+              <li><b>1B.</b> Снова сброс, новый чат, замер с промптом:
+                <pre><code>Баг: процентный купон считается неверно (10% на сумму 200 должно давать 180).
+Где: src/discount.js, функция applyCoupon.
+Проверка: `node tests/run-all.js` — упавших тестов быть не должно.
+Ограничения: меняй только src/discount.js, тесты не трогай.</code></pre>
+                Запишите в строку <b>1B</b>.
+              </li>
+            </ol>
+            <div class="qa"><details><summary>Решение</summary>
+              <p><b>Правильное исправление</b> в <code>src/discount.js</code>: значение купона — проценты, поэтому <code>total - total * coupon.value / 100</code>. После него тесты: «0 упало».</p>
+              <p><b>Что вы должны увидеть:</b> в 1A Claude исследует проект — листает файлы, часто заходит в <code>docs/</code> и <code>legacy/</code>; там устаревшая заметка (<code>pricing-notes.md</code>) говорит, что <code>value</code> — доля, и это уводит по ложному следу. Ходов и контекста заметно больше. В 1B ему сразу известны файл, функция, критерий и границы — ходов 3–4 (прочитать, исправить, запустить тесты).</p>
+              <p><b>Пример заполнения</b> (числа условные, у вас будут свои): 1A — контекст 45000, ходов 11; 1B — контекст 22000, ходов 4. В «Что заметил» для 1A: «читал docs/ и legacy/, получил ложный след».</p>
+              <p><b>Вывод:</b> в промпте работают четыре вещи: где, что ожидается, как проверить, что нельзя трогать. <b>Риск:</b> точный промпт выручает, только если диагноз верен; если ошиблись с файлом, Claude может «починить» не то.</p>
+            </details></div>
           </article>
 
-          <!-- TASK 1.3 -->
-          <article class="task" id="t3">
-            <span class="chip">Задание 1.3</span>
-            <h2>Различия между моделями и провайдерами</h2>
-            <div class="goal">
-              <strong>Что делаем:</strong> прогоняем одинаковые вопросы через
-              несколько моделей и сравниваем. <strong>Зачем:</strong> «самая
-              мощная модель» не всегда нужна — на простой задаче дешёвая
-              отвечает не хуже, но в разы дешевле.
-            </div>
-
-            <h3><span class="step-label">Шаг 1</span>Единая обёртка вызова</h3>
-            <pre><code>import time
-from openai import OpenAI
-client = OpenAI()
-
-def ask(model: str, prompt: str) -> dict:
-    start = time.time()
-    r = client.chat.completions.create(
-        model=model,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return {
-        "model": model,
-        "answer": r.choices[0].message.content,
-        "in": r.usage.prompt_tokens,
-        "out": r.usage.completion_tokens,
-        "sec": round(time.time() - start, 2),
-    }</code></pre>
-
-            <h3><span class="step-label">Шаг 2</span>Батарея вопросов</h3>
-            <pre><code>prompts = {
-    "простой":  "Столица Японии?",
-    "рассуждение": "У Ани 3 яблока, она отдала 1 и купила 4. Сколько стало?",
-    "код": "Напиши на Python функцию is_even(n).",
-}
-models = ["gpt-4o-mini", "gpt-4o"]
-
-rows = []
-for label, p in prompts.items():
-    for m in models:
-        res = ask(m, p)
-        res["label"] = label
-        rows.append(res)</code></pre>
-
-            <h3>
-              <span class="step-label">Шаг 3</span>Таблица сравнения + стоимость
-            </h3>
-            <pre><code># переиспользуем estimate_cost и PRICES из задания 1.2
-for r in rows:
-    r["cost"] = round(estimate_cost(r["model"], r["in"], r["out"]), 6)
-
-print(f'{"задача":12}{"модель":14}{"ток.in":>7}{"ток.out":>8}{"сек":>6}{"$":>10}')
-for r in rows:
-    print(f'{r["label"]:12}{r["model"]:14}{r["in"]:7}{r["out"]:8}{r["sec"]:6}{r["cost"]:10}')</code></pre>
-
-            <h3>
-              <span class="step-label">Шаг 4</span>Другой провайдер / локальная
-              модель
-            </h3>
-            <p>
-              Та же обёртка работает с OpenAI-совместимым endpoint (например,
-              локальный Ollama) — меняется только базовый URL и ключ:
-            </p>
-            <pre><code>local = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
-
-def ask_local(model: str, prompt: str) -> dict:
-    r = local.chat.completions.create(
-        model=model,  # напр. "llama3.1"
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return {"model": model, "answer": r.choices[0].message.content}
-
-# print(ask_local("llama3.1", "Столица Японии?"))</code></pre>
-
-            <h3><span class="step-label">Шаг 5</span>Вывод в отчёт</h3>
-            <pre><code>import json
-with open("module1_models.json", "w", encoding="utf-8") as f:
-    json.dump(rows, f, ensure_ascii=False, indent=2)</code></pre>
-            <div class="note">
-              <b>Вывод задания:</b> провайдеры отличаются ценой, скоростью,
-              размером контекста и форматом API, но при совместимом SDK
-              переключение — это смена <code>base_url</code>
-              и названия модели. Выбор модели — инженерное решение, а не вопрос
-              «какая новее».
-            </div>
+          <!-- TASK 2 -->
+          <article class="task" id="m9-t2">
+            <span class="chip">Задание 9.2</span>
+            <h2>Раздутый и короткий CLAUDE.md</h2>
+            <div class="goal"><strong>Зачем:</strong> файл правил читается в каждом чате и на каждом ходу — это постоянный «налог». Опасен и размер, и содержание.</div>
+            <ol>
+              <li><b>2A.</b> Сброс, затем положите раздутый файл правил:
+                <pre><code>node ../lab.js rules-bloated</code></pre>
+                Новый чат (файл читается при старте чата!), замер с тем же размытым промптом из 1A. Запишите в строку <b>2A</b>.
+              </li>
+              <li><b>2B.</b> Сброс, затем короткий файл правил:
+                <pre><code>node ../lab.js rules-lean</code></pre>
+                Новый чат, замер с тем же размытым промптом. Строка <b>2B</b>.
+              </li>
+              <li>Откройте оба файла из <code>module-1/token-lab/rules/</code> и найдите в раздутом: дубли, историю проекта и приказ «изучи <code>docs/</code> и <code>legacy/</code>».</li>
+            </ol>
+            <div class="qa"><details><summary>Решение</summary>
+              <p><b>Что вы должны увидеть:</b> в 2A контекст больше уже на старте (файл — это лишние сотни токенов в каждом ходу), а главное — строки «обязательно изучи docs/» и «посмотри legacy/» заставляют Claude читать эти папки, даже когда это не нужно. Ходов и контекста больше, чем в 2B и даже чем в 1A (где файла правил вообще не было). В 2B Claude получает короткую инструкцию «читай только нужные файлы» и тратит меньше.</p>
+              <p><b>Вывод:</b> каждое правило в <code>CLAUDE.md</code> платится на каждом ходу; пишите только то, что действительно меняет поведение, без дублей и истории проекта, и никогда не приказывайте «читай всё». <b>Риск:</b> слишком скупой файл может не дать Claude важных соглашений проекта — сокращайте воду, а не смысл.</p>
+            </details></div>
           </article>
 
-          <!-- TASK 1.4 -->
-          <article class="task" id="t4">
-            <span class="chip">Задание 1.4</span>
-            <h2>Оптимизация расходов и объёма контекста</h2>
-            <div class="goal">
-              <strong>Что делаем:</strong> берём «дорогой» запрос и
-              последовательно удешевляем его, не теряя качества.
-              <strong>Зачем:</strong> это ежедневный навык при работе с
-              AI-агентами, где контекст быстро раздувается.
-            </div>
+          <!-- TASK 3 -->
+          <article class="task" id="m9-t3">
+            <span class="chip">Задание 9.3</span>
+            <h2>Подробный и тихий вывод команды</h2>
+            <div class="goal"><strong>Зачем:</strong> всё, что печатает команда, остаётся в контексте и пересылается на каждом следующем ходу.</div>
+            <ol>
+              <li><b>3A.</b> Сброс, новый чат, замер с промптом:
+                <pre><code>Запусти `node tests/run-all.js` и скажи, какие тесты падают. Ничего не исправляй.</code></pre>
+                Строка <b>3A</b> (тесты — <code>—</code>, код не менялся).
+              </li>
+              <li><b>3B.</b> Сброс, новый чат, замер с промптом:
+                <pre><code>Запусти `node tests/run-all.js --quiet` и скажи, какие тесты падают. Ничего не исправляй.</code></pre>
+                Строка <b>3B</b>.
+              </li>
+              <li>Для понимания: запустите обе команды сами в терминале и сравните длину вывода.</li>
+            </ol>
+            <div class="qa"><details><summary>Решение</summary>
+              <p><b>Что вы должны увидеть:</b> ответ одинаковый (падают 3 теста), но в 3A обычный запуск печатает ~150 строк «✓ …», и они остаются в контексте. В 3B — только упавшие тесты и итог. Разница в контексте — несколько тысяч токенов, и она пересылается на <b>каждом</b> следующем ходу этого чата.</p>
+              <p><b>Вывод:</b> просите у инструментов тихий режим (<code>--quiet</code>, <code>-q</code>, фильтр <code>| tail</code>) для сборок, тестов, установки пакетов. <b>Риск:</b> если вывод слишком урезан, не будет видно причину падения — тогда запустите подробный режим только для упавшего теста.</p>
+            </details></div>
+          </article>
 
-            <h3>
-              <span class="step-label">Шаг 1</span>Базовая (расточительная)
-              версия
-            </h3>
-            <pre><code>document = open("big_policy.txt", encoding="utf-8").read()  # большой документ
+          <!-- TASK 4 -->
+          <article class="task" id="m9-t4">
+            <span class="chip">Задание 9.4</span>
+            <h2>Запрет читать «шум»</h2>
+            <div class="goal"><strong>Зачем:</strong> фраза «не читай лишнее» в промпте — просьба, а настройки — запрет, который исполняет сама среда.</div>
+            <ol>
+              <li>Сброс, затем:
+                <pre><code>node ../lab.js deny</code></pre>
+                Скрипт создаёт <code>.claude/settings.json</code> с запретом читать <code>docs/</code>, <code>legacy/</code>, <code>logs/</code>. Откройте файл и прочитайте его.
+              </li>
+              <li>Новый чат (настройки читаются при старте), замер с тем же размытым промптом из 1A. Следите, пытается ли Claude читать запрещённое и как реагирует на отказ. Строка <b>4</b>.</li>
+              <li>Сравните со строкой <b>1A</b>.</li>
+            </ol>
+            <div class="qa"><details><summary>Решение</summary>
+              <p><b>Что вы должны увидеть:</b> попытки открыть <code>docs/</code> и <code>legacy/</code> отклоняются, и Claude идёт сразу в <code>src/</code>. Контекст и число ходов меньше, чем в 1A, и нет ложного следа из устаревшей заметки. Отклонённая попытка — тоже ход, поэтому выигрыш не безусловный.</p>
+              <p><b>Вывод:</b> закрывайте от агента то, что ему заведомо не нужно: логи, сборки, <code>node_modules</code>, архив документации. <b>Риск:</b> запрет не абсолютен (чтение иногда возможно через команды оболочки), и можно закрыть то, что понадобится. Проверяйте в ленте, что агент реально читал.</p>
+            </details></div>
+          </article>
 
-def answer_naive(question: str) -> dict:
-    prompt = f"Документ:\n{document}\n\nВопрос: {question}"
-    return ask("gpt-4o-mini", prompt)   # ask() из задания 1.3
+          <!-- TASK 5 -->
+          <article class="task" id="m9-t5">
+            <span class="chip">Задание 9.5</span>
+            <h2>Рост контекста и /compact</h2>
+            <div class="goal"><strong>Зачем:</strong> увидеть, как контекст растёт сам по ходу диалога и как его сжать.</div>
+            <ol>
+              <li>Сброс, закрыть вкладки, <b>один</b> новый чат. Дальше все запросы — в нём, без <code>/clear</code>.</li>
+              <li>Отправьте <code>Покажи содержимое src/discount.js.</code> → <code>/context</code> → строка <b>5.1</b>.</li>
+              <li>Отправьте <code>Покажи содержимое src/cart.js.</code> → <code>/context</code> → строка <b>5.2</b>.</li>
+              <li>Отправьте <code>Запусти `node tests/run-all.js` и перескажи результат в одном предложении.</code> → <code>/context</code> → строка <b>5.3</b>.</li>
+              <li>Введите <code>/compact</code>, дождитесь окончания → <code>/context</code> → строка <b>5.4</b>. В заметке опишите, что стало с категорией сообщений (Messages).</li>
+            </ol>
+            <div class="qa"><details><summary>Решение</summary>
+              <p><b>Что вы должны увидеть:</b> 5.1 → 5.2 → 5.3 растёт: маленькие файлы добавляют немного, а подробный вывод тестов — больше всего (два коротких запроса не равны по цене). После <code>/compact</code> (5.4) сообщения заменяются кратким пересказом, и контекст падает, но остаются «налог» пустого чата и пересказ.</p>
+              <p><b>Вывод:</b> всё прочитанное остаётся в контексте и оплачивается на всех следующих ходах. Новую, не связанную с прежней задачу начинайте в чистом чате; длинную сессию периодически сжимайте. <b>Риск:</b> после <code>/compact</code> теряются детали — если они нужны, перечитайте файл.</p>
+            </details></div>
+          </article>
 
-res = answer_naive("Сколько дней отпуска?")
-print(res["in"], "входных токенов")     # очень много</code></pre>
+          <!-- SUBMIT -->
+          <article class="task" id="m9-submit">
+            <span class="chip">Отправка</span>
+            <h2>Выводы и проверка файла</h2>
+            <ol>
+              <li>В конце <code>module-1/token-lab/results.md</code> ответьте на три вопроса своими словами (3–5 предложений каждый, со ссылками на ваши числа).</li>
+              <li>Проверьте файл командой в терминале:
+                <pre><code>node ../lab.js check</code></pre>
+                <b>Ошибки</b> нужно исправить; <b>предупреждения</b> — перепроверить числа (например, после <code>/compact</code> контекст не может расти).
+              </li>
+              <li>Когда команда напишет «Готово: results.md заполнен», отправьте файл <code>module-1/token-lab/results.md</code> на проверку.</li>
+            </ol>
 
-            <h3>
-              <span class="step-label">Шаг 2</span>Приём 1 — отдавать только
-              нужный фрагмент
-            </h3>
-            <pre><code>def relevant_section(doc: str, keyword: str) -> str:
-    # простейший поиск абзаца по ключевому слову (полноценный поиск — в модуле 5)
-    for para in doc.split("\n\n"):
-        if keyword.lower() in para.lower():
-            return para
-    return doc[:500]
+            <h3>Критерии готовности</h3>
+            <ul class="checklist">
+              <li>В таблице заполнены все 11 строк вашими числами из <code>/context</code>.</li>
+              <li>В каждой строке есть конкретное наблюдение, а не только числа.</li>
+              <li>Для строк с правкой кода вы сами проверили тесты.</li>
+              <li>Выводы называют приём с наибольшим эффектом и его риск.</li>
+              <li><code>node ../lab.js check</code> завершилась без ошибок.</li>
+            </ul>
 
-def answer_scoped(question: str, keyword: str) -> dict:
-    chunk = relevant_section(document, keyword)
-    prompt = f"Фрагмент:\n{chunk}\n\nВопрос: {question}"
-    return ask("gpt-4o-mini", prompt)
-
-res2 = answer_scoped("Сколько дней отпуска?", "отпуск")
-print(res2["in"], "входных токенов")     # в десятки раз меньше</code></pre>
-
-            <h3>
-              <span class="step-label">Шаг 3</span>Приём 2 — сжимать историю
-              диалога
-            </h3>
-            <pre><code>def summarize(history: str) -> str:
-    r = ask("gpt-4o-mini", f"Сожми до 3 пунктов ключевые решения:\n{history}")
-    return r["answer"]
-
-long_history = "... длинная переписка на два часа ..."
-handoff = summarize(long_history)   # короткая выжимка вместо всей истории</code></pre>
-
-            <h3>
-              <span class="step-label">Шаг 4</span>Приём 3 — ограничивать вывод
-            </h3>
-            <pre><code>r = client.chat.completions.create(
-    model="gpt-4o-mini",
-    messages=[{"role": "user", "content": "Ответь одним словом: столица Италии?"}],
-    max_tokens=5,          # не даём модели «растекаться»
-)
-print(r.choices[0].message.content)</code></pre>
-
-            <h3><span class="step-label">Шаг 5</span>Сравнение до/после</h3>
-            <pre><code>rows = [
-    ("наивно",  res["in"],  res["out"]),
-    ("фрагмент", res2["in"], res2["out"]),
-]
-for label, i, o in rows:
-    print(f'{label:10} вход={i:6} стоимость={estimate_cost("gpt-4o-mini", i, o):.6f}')</code></pre>
+            <h3>Если что-то не работает</h3>
             <table>
-              <tr>
-                <th>Приём</th>
-                <th>Что экономит</th>
-                <th>Эффект</th>
-              </tr>
-              <tr>
-                <td>Точный фрагмент вместо всего документа</td>
-                <td>входные токены</td>
-                <td>в 10–500×</td>
-              </tr>
-              <tr>
-                <td>Сжатие истории (handoff)</td>
-                <td>контекст между сессиями</td>
-                <td>крупно</td>
-              </tr>
-              <tr>
-                <td>max_tokens и чёткий формат</td>
-                <td>выходные токены</td>
-                <td>средне</td>
-              </tr>
+              <thead><tr><th>Симптом</th><th>Что делать</th></tr></thead>
+              <tbody>
+                <tr><td>Нет команд <code>/context</code> или <code>/cost</code></td><td>Обновите расширение. Если не помогло — берите число из индикатора контекста в чате и одним и тем же способом во всех строках.</td></tr>
+                <tr><td><code>/cost</code> без денег (подписка)</td><td>Ставьте <code>—</code> в «Стоимость», сравнивайте токены и ходы.</td></tr>
+                <tr><td>«Cannot find module» при <code>node ../lab.js</code></td><td>Терминал не в <code>sample-app</code>: откройте эту папку как рабочую или сделайте <code>cd</code> в неё.</td></tr>
+                <tr><td><code>CLAUDE.md</code> или запрет «не действуют»</td><td>Начните новый чат; проверьте <code>node ../lab.js status</code>.</td></tr>
+                <tr><td>Claude изменил тесты или лишние файлы</td><td>Отметьте в заметке, сделайте <code>reset</code> и повторите запуск.</td></tr>
+                <tr><td>Числа сильно «гуляют»</td><td>Повторите запуск 2–3 раза, возьмите среднее и укажите разброс в заметке.</td></tr>
+              </tbody>
             </table>
+          </article>
+          </section>
+
+          <!-- MODULE 10 -->
+          <section class="module-block">
+            <article class="task module-head" id="m10">
+              <span class="chip">Модуль 10</span>
+              <h2>LLM изнутри: токены, вероятности, контекст</h2>
+            <p>
+            Пять коротких экспериментов. Три из них вы запускаете на маленькой
+            учебной «модели» из папки <code>module-1/llm-lab</code> — она крошечная, но
+            устроена по тем же принципам, что и большие. Два — в чате Claude Code,
+            на настоящей модели. Результаты записываете в
+            <code>module-1/llm-lab/results.md</code> и проверяете командой.
+            </p>
             <div class="note">
-              <b>Вывод задания:</b> самый большой выигрыш даёт отправка только
-              релевантного контекста. Это прямой мостик к модулю 5 (RAG), где
-              поиск фрагментов делается правильно.
+            Идея модуля: прежде чем объяснять, <b>предскажите результат</b>, потом
+            запустите и сравните. Расхождение между прогнозом и фактом и есть
+            момент понимания. Понадобится Node.js; зависимости не нужны.
+            </div>
+            </article>
+
+<article class="task" id="m10-prep">
+            <span class="chip">Подготовка</span>
+            <h2>Карта модуля и подготовка</h2>
+            <p>LLM (large language model) — это нейросеть, обученная на огромных текстах делать одно: <b>по уже написанному предсказывать следующий токен</b>. Всё остальное — ответы, код, переводы — следствие. Пять заданий разбирают эту фразу по частям:</p>
+            <table>
+              <thead><tr><th>Часть фразы</th><th>Что проверяем</th><th>Задание</th></tr></thead>
+              <tbody>
+                <tr><td>«токен»</td><td>модель видит не буквы и не слова, а фрагменты</td><td>10.1</td></tr>
+                <tr><td>«предсказывать следующий»</td><td>на выходе — распределение вероятностей, ответ выбирается из него</td><td>10.2</td></tr>
+                <tr><td>«по уже написанному»</td><td>видно только то, что поместилось в контекстное окно</td><td>10.3</td></tr>
+                <tr><td>«предсказывать», а не «знать»</td><td>правдоподобное ≠ верное; источник возвращает фактам опору</td><td>10.4</td></tr>
+                <tr><td>токен за токеном</td><td>«мысль» живёт только в написанном тексте, поэтому шаги помогают</td><td>10.5</td></tr>
+              </tbody>
+            </table>
+            <ol>
+              <li>В IDE: <i>File → Open Folder…</i> → выберите папку <code>module-1/llm-lab</code>.</li>
+              <li>Откройте терминал (<code>Ctrl+`</code>) и проверьте, что лаборатория работает:
+                <pre><code>node lab.js help</code></pre>
+                Должен появиться список команд.
+              </li>
+              <li>Откройте <code>results.md</code> и заполните имя, IDE и модель, с которой работаете в чате.</li>
+            </ol>
+            <div class="note">
+              Учебная «модель» работает на крошечном корпусе в несколько предложений. Это сознательное упрощение: у неё можно <b>посчитать всё вручную</b>. Настоящая модель делает то же самое, только на триллионах слов и с нейросетью вместо таблицы.
             </div>
           </article>
 
-          <!-- TASK 1.5 -->
-          <article class="task" id="t5">
-            <span class="chip">Задание 1.5</span>
-            <h2>Использование LLM через API</h2>
-            <div class="goal">
-              <strong>Что делаем:</strong> оборачиваем всё в переиспользуемый
-              клиент <code>LLMClient</code>. <strong>Зачем:</strong> это основа
-              KnowledgeBot — все следующие модули будут импортировать именно
-              его.
-            </div>
-
-            <h3><span class="step-label">Шаг 1</span>Класс-обёртка</h3>
-            <pre><code># файл: llm_client.py
-import time
-from openai import OpenAI
-from dotenv import load_dotenv
-
-load_dotenv()
-
-class LLMClient:
-    def __init__(self, model: str = "gpt-4o-mini", base_url: str | None = None):
-        self.model = model
-        self.client = OpenAI(base_url=base_url) if base_url else OpenAI()
-
-    def ask(self, prompt: str, system: str | None = None, **kwargs) -> str:
-        messages = []
-        if system:
-            messages.append({"role": "system", "content": system})
-        messages.append({"role": "user", "content": prompt})
-        r = self.client.chat.completions.create(
-            model=self.model, messages=messages, **kwargs
-        )
-        return r.choices[0].message.content</code></pre>
-
-            <h3>
-              <span class="step-label">Шаг 2</span>Базовый retry и таймаут
-            </h3>
-            <pre><code>    def ask_safe(self, prompt: str, retries: int = 3, **kwargs) -> str:
-        for attempt in range(retries):
-            try:
-                return self.ask(prompt, timeout=20, **kwargs)
-            except Exception as e:
-                if attempt == retries - 1:
-                    return f"[Ошибка после {retries} попыток: {e}]"
-                time.sleep(1.5 * (attempt + 1))   # нарастающая пауза</code></pre>
-            <div class="note">
-              Добавьте этот метод внутрь класса <code>LLMClient</code> (с тем же
-              отступом, что и <code>ask</code>).
-            </div>
-
-            <h3>
-              <span class="step-label">Шаг 3</span>Системный prompt и параметры
-            </h3>
-            <pre><code># использование:
-from llm_client import LLMClient
-
-bot = LLMClient()
-print(bot.ask(
-    "Объясни, что такое токен, одним предложением.",
-    system="Ты лаконичный технический наставник. Отвечай по-русски.",
-    temperature=0.3,
-))</code></pre>
-
-            <h3>
-              <span class="step-label">Шаг 4</span>Потоковый ответ (streaming)
-            </h3>
-            <pre><code>    def stream(self, prompt: str):
-        stream = self.client.chat.completions.create(
-            model=self.model,
-            messages=[{"role": "user", "content": prompt}],
-            stream=True,
-        )
-        for chunk in stream:
-            delta = chunk.choices[0].delta.content
-            if delta:
-                print(delta, end="", flush=True)</code></pre>
-
-            <h3>
-              <span class="step-label">Шаг 5</span>Проверка — это фундамент
-              проекта
-            </h3>
-            <pre><code>if __name__ == "__main__":
-    bot = LLMClient()
-    print(bot.ask_safe("Назови три цвета списком."))
-    bot.stream("Посчитай вслух от 1 до 5.")</code></pre>
-            <div class="note">
-              <b>Итог модуля:</b> вы понимаете механику токенов и стоимости и
-              имеете <code>llm_client.py</code>. В модуле 2 мы научим этот
-              клиент писать качественные prompt и возвращать строгий JSON.
-            </div>
+          <!-- TASK 1 -->
+          <article class="task" id="m10-t1">
+            <span class="chip">Задание 10.1</span>
+            <h2>Токены: из чего состоит текст для модели</h2>
+            <div class="goal"><strong>Зачем:</strong> понять, что модель оперирует токенами, а не словами и буквами. От этого зависят цена, лимиты и странные ошибки вроде «не может сосчитать буквы».</div>
+            <p><b>Теория за минуту.</b> Токенизатор режет текст на фрагменты из словаря. Частые слова — один токен, редкие распадаются на куски, незнакомые символы — на отдельные байты. Словарь строится на данных (алгоритм BPE: самые частые пары символов склеиваются снова и снова). Команда <code>tokens</code> использует именно такой алгоритм, обученный на небольшом англоязычном тексте <code>corpus-bpe.txt</code>.</p>
+            <ol>
+              <li><b>Прогноз.</b> Не запуская ничего, запишите в блокнот: в каком из двух предложений ниже будет больше токенов — английском или русском с тем же смыслом? Во сколько раз?</li>
+              <li><b>Замер.</b> Запустите (каждую команду отдельно) и впишите число <b>токенов</b> в <code>results.md</code>:
+                <pre><code>node lab.js tokens "The customer cannot log in after the password reset."
+node lab.js tokens "Клиент не может войти после сброса пароля."</code></pre>
+                Ключи: <code>1_en_tokens</code>, <code>1_ru_tokens</code>. Посмотрите на русский вывод: что означают куски вида <code>&lt;d0&gt;</code>?
+              </li>
+              <li><b>Редкое и частое слово:</b>
+                <pre><code>node lab.js tokens "unbelievably"
+node lab.js tokens "The"</code></pre>
+                Ключи: <code>1_rare_tokens</code>, <code>1_common_tokens</code>.
+              </li>
+              <li><b>Числа:</b>
+                <pre><code>node lab.js tokens "1234567890"
+node lab.js tokens "1 234 567 890"</code></pre>
+                Ключи: <code>1_num1_tokens</code>, <code>1_num2_tokens</code>.
+              </li>
+              <li><b>Пробел.</b> Сравните <code>tokens "password"</code> и <code>tokens " password"</code> (с пробелом в кавычках). Что изменилось?</li>
+              <li><b>Связь с реальностью.</b> Выполните <code>tokens "strawberry"</code> и посмотрите, как слово разрезано. Подумайте: что «видит» модель, когда её просят сосчитать в нём букву «r»?</li>
+              <li>В <code>1_наблюдение</code> напишите 1–2 предложения: что оказалось неожиданным по сравнению с прогнозом.</li>
+            </ol>
+            <div class="qa"><details><summary>Решение</summary>
+              <p><b>Ожидаемые числа</b> (команда детерминирована, у всех должно совпасть): английское предложение — 16 токенов, русское — 45; <code>unbelievably</code> — 11, <code>The</code> — 1; <code>1234567890</code> — 10, а <code>1 234 567 890</code> — 13.</p>
+              <p><b>Что вы должны увидеть:</b> русский текст при примерно такой же длине в символах стоит почти втрое больше токенов: словарь обучен на английском, а кириллица вынуждена дробиться на байты (каждая буква — 2 байта в UTF-8, куски <code>&lt;d0&gt;</code> — «половинки» символов без смысла). Редкое слово распадается почти на буквы, частое — один токен. Число режется по цифрам; пробелы внутри числа только добавляют токенов. Слово с пробелом в начале (<code>·password</code>) — один «цельный» токен, а то же слово без пробела — четыре: токен зависит от контекста написания.</p>
+              <p><b>Оговорка:</b> в настоящих моделях словарь обучен на гигантских многоязычных данных, поэтому разрыв намного меньше, но направление то же: русский, редкие слова, числа и код обычно дороже английской прозы.</p>
+              <p><b>Вывод:</b> лимиты, цена и контекст считаются в токенах, а не в словах. Модель не «видит» букв в слове, поэтому вопросы про буквы и точный счёт символов ей даются хуже, чем кажется (вернёмся в задании 10.5). <b>Риск:</b> оценивать длину текста «на глаз» по словам — значит ошибаться в бюджете в разы.</p>
+            </details></div>
           </article>
+
+          <!-- TASK 2 -->
+          <article class="task" id="m10-t2">
+            <span class="chip">Задание 10.2</span>
+            <h2>Следующий токен, вероятности и температура</h2>
+            <div class="goal"><strong>Зачем:</strong> увидеть, что на выходе модели — не «ответ», а распределение вероятностей, и что случайность в ответах — настраиваемая вещь.</div>
+            <p><b>Теория за минуту.</b> Модель получает контекст и выдаёт вероятность каждого токена из словаря. Дальше стратегия выбора: всегда самый вероятный (температура 0 — детерминированно) или случайно пропорционально вероятностям. Температура «сглаживает» или «заостряет» распределение: чем она выше, тем чаще выбираются маловероятные продолжения. Наша мини-модель — таблица «последние N слов → что шло дальше» на 12 предложениях из <code>corpus-lm.txt</code>. Откройте этот файл и прочитайте его целиком.</p>
+            <ol>
+              <li><b>Прогноз вручную.</b> Посчитайте по корпусу: сколько раз после «on the» шло слово «mat» и сколько всего раз встречалось «on the». Чему равна вероятность <code>p(mat | on the)</code>?</li>
+              <li><b>Проверка:</b>
+                <pre><code>node lab.js next "sat on the"</code></pre>
+                Модель смотрит на последние два слова (порядок 2). Впишите вероятность «mat» в <code>2_p_mat_order2</code>.
+              </li>
+              <li><b>Меньше контекста.</b> Дайте модели видеть только одно последнее слово:
+                <pre><code>node lab.js next "the" --order 1</code></pre>
+                Впишите вероятность «mat» (до сотых) в <code>2_p_mat_order1</code>. Сравните два распределения: где модель увереннее и почему?
+              </li>
+              <li><b>Температура 0.</b> Запустите с разными <code>--seed</code> (зерно случайности):
+                <pre><code>node lab.js gen "the cat" --temp 0 --seed 1
+node lab.js gen "the cat" --temp 0 --seed 2</code></pre>
+              </li>
+              <li><b>Высокая температура:</b>
+                <pre><code>node lab.js gen "the cat" --temp 1.5 --seed 1
+node lab.js gen "the cat" --temp 1.5 --seed 2</code></pre>
+                Поиграйте с <code>--temp</code> (0.3, 0.7, 1.5) и <code>--seed</code>; попробуйте и <code>--order 1</code>: заметно ли, что текст стал «менее осмысленным»?
+              </li>
+              <li><b>Статистика.</b> Команда <code>unique</code> запускает генерацию для seed 1…10 и говорит, сколько получилось <b>разных</b> текстов:
+                <pre><code>node lab.js unique --temp 0
+node lab.js unique --temp 1.5</code></pre>
+                Впишите числа в <code>2_unique_t0</code> и <code>2_unique_t15</code>.
+              </li>
+              <li>В <code>2_наблюдение</code> напишите: почему при температуре 0 результат всегда один и тот же и чем вызвана разница между порядком 1 и 2.</li>
+            </ol>
+            <div class="qa"><details><summary>Решение</summary>
+              <p><b>Ожидаемые значения:</b> «on the» встречается 6 раз (mat — 3, sofa, roof, porch — по 1), поэтому <code>p(mat | on the)</code> = 3/6 = <b>0,50</b>. При порядке 1 контекст «the» встречается 23 раза, «mat» после него — 3 раза: <b>0,13</b>. <code>unique</code>: при температуре 0 — <b>1</b> уникальный текст, при 1,5 — <b>5</b>.</p>
+              <p><b>Что вы должны увидеть:</b> чем длиннее контекст, тем острее распределение. Одно слово «the» не говорит почти ничего (после него может идти кто угодно), два слова «on the» уже сужают выбор до места. Это главная идея языковых моделей: <b>контекст сужает предсказание</b>. Нейросети в LLM учитывают сотни тысяч токенов контекста и умеют «взвешивать», какие из них важнее (механизм внимания), но задача та же. При температуре 0 всегда берётся самый вероятный токен, результат повторяется; при положительной температуре выбор случаен, и результат зависит от зерна.</p>
+              <p><b>Вывод:</b> «один и тот же вопрос — разные ответы» — не сбой, а свойство выбора из распределения. Для воспроизводимых задач (извлечение данных, классификация) температуру снижают, для идей и текстов — поднимают. <b>Риск:</b> даже при температуре 0 большие модели на разных серверах и версиях могут отличаться, а слишком высокая температура ведёт к бессмыслице и неверным фактам.</p>
+            </details></div>
+          </article>
+
+          <!-- TASK 3 -->
+          <article class="task" id="m10-t3">
+            <span class="chip">Задание 10.3</span>
+            <h2>Контекстное окно: что модель «помнит»</h2>
+            <div class="goal"><strong>Зачем:</strong> понять, что у модели нет памяти между репликами — есть только окно из последних токенов, которое каждый раз заново подаётся на вход.</div>
+            <p><b>Теория за минуту.</b> Модель не хранит диалог. На каждом ходу приложение собирает весь разговор в один текст и отправляет целиком. Размер этого текста ограничен окном (в токенах). Если он не помещается, старые сообщения отбрасываются или сжимаются — и всё, что в них было, для модели просто не существует. Команда <code>window</code> моделирует это на диалоге из <code>dialog.txt</code>: в первой реплике пользователь называет своё имя, в конце спрашивает «What is my name?».</p>
+            <ol>
+              <li>Прочитайте <code>dialog.txt</code>. <b>Прогноз:</b> при каком размере окна (в токенах) имя ещё будет известно? Запишите догадку.</li>
+              <li><b>Эксперимент.</b> Запустите с разными размерами:
+                <pre><code>node lab.js window --size 300
+node lab.js window --size 150
+node lab.js window --size 60</code></pre>
+                Смотрите, какие сообщения «в окне», а какие «забыто». Окно заполняется с <b>конца</b> диалога.
+              </li>
+              <li><b>Найдите границу:</b> подберите наименьший <code>--size</code>, при котором ответ «Your name is Alex». Впишите его в <code>3_min_size</code>.</li>
+              <li><b>Закреплённое сообщение.</b> Добавьте <code>--pin-first</code> — так в реальных приложениях работает системная инструкция: она всегда остаётся в окне:
+                <pre><code>node lab.js window --size 100 --pin-first</code></pre>
+                Найдите наименьший размер с этим флагом и впишите в <code>3_pin_size</code>.
+              </li>
+              <li><b>Опыт на настоящей модели.</b> В чате Claude Code отправьте: <code>Запомни: код доступа — 7413. Подтверди одним словом.</code> Затем начните новый чат (<code>/clear</code>) и спросите: <code>Какой код доступа я называл?</code> Опишите ответ в <code>3_наблюдение</code> вместе с выводом из эксперимента выше.</li>
+            </ol>
+            <div class="qa"><details><summary>Решение</summary>
+              <p><b>Ожидаемые значения:</b> без закрепления имя вспоминается, только когда в окне все 8 реплик — <code>3_min_size</code> = <b>250</b> (на 249 первая реплика уже теряется). С <code>--pin-first</code> достаточно <b>29</b> токенов: первое сообщение занимает 29 токенов и остаётся всегда, остальное обрезается.</p>
+              <p><b>Что вы должны увидеть:</b> «забыто» не значит «стёрто» — реплика остаётся в истории на экране, но в модель уже не отправляется. Модель не «чувствует», что что-то потеряла, а честно отвечает по тому, что видит. После <code>/clear</code> настоящая модель так же не знает код: прошлый диалог в окно не попадает, значит для неё его не было.</p>
+              <p><b>Вывод:</b> «память» чата — это пересылка истории; длинный диалог дорожает и рано или поздно теряет начало. Важное (правила, роль, факты) нужно держать закреплённым — в системной инструкции, <code>CLAUDE.md</code> — или напоминать в нужный момент. <b>Риск:</b> закреплять слишком много — значит платить за это на каждом ходу и сужать место для остального (см. модуль 9).</p>
+            </details></div>
+          </article>
+
+          <!-- TASK 4 -->
+          <article class="task" id="m10-t4">
+            <span class="chip">Задание 10.4</span>
+            <h2>Галлюцинации и опора на источник</h2>
+            <div class="goal"><strong>Зачем:</strong> увидеть, что модель выдаёт правдоподобное продолжение, а не факт, и как источник и честный выход «не знаю» это исправляют.</div>
+            <p><b>Теория за минуту.</b> Модель обучена продолжать текст так, как он продолжался бы в похожих документах. Если в её данных ответа нет, ничто не заставляет её промолчать: самое вероятное продолжение — уверенно звучащая цифра. Это и называют галлюцинацией. Лекарства: дать источник в контекст (то, что позже назовём RAG), потребовать цитату и разрешить ответ «не знаю».</p>
+            <p>Подопытный: внутренняя памятка вымышленного сервиса <code>docs/acme-pay.md</code>. <b>Пока не открывайте её.</b></p>
+            <ol>
+              <li><b>4A — без источника.</b> Новый чат, закройте все вкладки редактора. Отправьте:
+                <pre><code>Не открывай файлы и не используй инструменты. Ответь по памяти: какой лимит запросов в минуту у API Acme Pay и за сколько дней после оплаты можно сделать возврат? Скажи, насколько ты уверен.</code></pre>
+                Впишите названные числа в <code>4_a_limit</code> и <code>4_a_refund</code> (если модель отказалась называть, напишите «не знаю»). В <code>4_a_sure</code> напишите «да», если модель подала числа как факт, и «нет», если честно сказала, что не знает.
+              </li>
+              <li><b>4B — с источником.</b> Снова новый чат:
+                <pre><code>Прочитай docs/acme-pay.md и ответь: какой лимит запросов в минуту у API Acme Pay и за сколько дней после оплаты можно сделать возврат? Процитируй строку, на которую опираешься.</code></pre>
+                Числа — в <code>4_b_limit</code> и <code>4_b_refund</code>.
+              </li>
+              <li><b>4C — разрешение не знать.</b> Новый чат:
+                <pre><code>Не открывай файлы и не используй инструменты. Если не знаешь ответа точно, прямо скажи «не знаю» и не выдумывай. Какой лимит запросов в минуту у API Acme Pay?</code></pre>
+                Кратко (до 10 слов) опишите ответ в <code>4_c_answer</code>.
+              </li>
+              <li>Теперь откройте <code>docs/acme-pay.md</code> и сравните ответы 4A с фактом. В <code>4_наблюдение</code> напишите: совпало ли и как звучала уверенность.</li>
+            </ol>
+            <div class="qa"><details><summary>Решение</summary>
+              <p><b>Что вы должны увидеть:</b> в 4B ответ точный: <b>120 запросов в минуту</b> и <b>45 дней</b>, со ссылкой на строку. В 4A чаще всего либо названы типовые «правдоподобные» значения (100, 60, 30 дней), либо современная модель честно предупреждает, что про вымышленный сервис ничего не знает. Оба исхода полезны для вывода: поведение зависит от модели и формулировки, и полагаться на «сама поймёт, что не знает» нельзя. В 4C, с явным разрешением, ответ почти всегда честный отказ.</p>
+              <p><b>Вывод:</b> факты о ваших системах модели неоткуда знать: их нужно приносить в контекст (документы, <code>@</code>-ссылки на файлы, поиск), просить цитату и явно разрешать «не знаю». <b>Риск:</b> источник снижает ошибки, но не отменяет проверку: модель может процитировать не ту строку или перепутать единицы измерения. Критичные цифры сверяйте с оригиналом.</p>
+            </details></div>
+          </article>
+
+          <!-- TASK 5 -->
+          <article class="task" id="m10-t5">
+            <span class="chip">Задание 10.5</span>
+            <h2>Рассуждение по шагам: вычисление на токенах</h2>
+            <div class="goal"><strong>Зачем:</strong> понять, что у модели нет «скрытого блокнота»: она вычисляет, только пока пишет. Шаги в ответе — это её вычислительное время.</div>
+            <p><b>Теория за минуту.</b> На каждый следующий токен модель делает ограниченный объём вычислений. Задача «в уме за один токен» (длинное умножение, подсчёт букв) требует больше, чем один шаг даёт, и модель выдаёт правдоподобную, но неверную цифру. Если заставить её расписать промежуточные результаты, каждый шаг прост, и ошибок меньше. На этом построены «рассуждающие» (thinking) режимы. Проверим на двух задачах, где правильный ответ известен.</p>
+            <ol>
+              <li>Выведите задачи командой <code>node lab.js quiz</code>.</li>
+              <li><b>Вопрос 1, ответ сразу.</b> Новый чат:
+                <pre><code>Не используй инструменты и не рассуждай. Ответь одним числом, без пояснений: 3847 × 2915</code></pre>
+                Ответ — в <code>5_q1_a</code>, в <code>5_q1_a_верно</code> — «да»/«нет» (проверьте калькулятором).
+              </li>
+              <li><b>Вопрос 1, по шагам.</b> Новый чат:
+                <pre><code>Не используй инструменты. Решай по шагам: разложи 2915 на разряды, перемножь 3847 на каждый разряд отдельно, затем сложи частичные результаты. Только после этого дай итог: 3847 × 2915</code></pre>
+                Ответ — в <code>5_q1_b</code>, проверка — в <code>5_q1_b_верно</code>.
+              </li>
+              <li><b>Вопрос 2, ответ сразу.</b> Новый чат:
+                <pre><code>Не используй инструменты и не рассуждай. Ответь одним числом: сколько раз буква «с» встречается в слове «ассоциативность»?</code></pre>
+                Поля <code>5_q2_a</code>, <code>5_q2_a_верно</code>.
+              </li>
+              <li><b>Вопрос 2, по шагам.</b> Новый чат:
+                <pre><code>Не используй инструменты. Выпиши слово «ассоциативность» по одной букве с номерами, отметь каждую «с», затем сосчитай отметки и дай итог.</code></pre>
+                Поля <code>5_q2_b</code>, <code>5_q2_b_верно</code>.
+              </li>
+              <li>В <code>5_наблюдение</code> напишите, в каких из четырёх запусков модель ошиблась (или не ошиблась) и сколько текста было написано до ответа.</li>
+            </ol>
+            <div class="note">
+              Современные модели нередко решают такие задачи верно уже с первой попытки, особенно в «умных» режимах. Тогда это тоже результат: впишите «да» и честно напишите об этом в наблюдении. Чтобы увидеть эффект ярче, повторите шаги с числами покрупнее (например, 738492 × 51836) и проверьте калькулятором; в <code>results.md</code> сохраните основной прогон.
+            </div>
+            <div class="qa"><details><summary>Решение</summary>
+              <p><b>Правильные ответы:</b> 3847 × 2915 = <b>11 214 005</b>; букв «с» в «ассоциативность» — <b>3</b> (позиции 2, 3 и 13: а<u>сс</u>оциативно<u>с</u>ть… считая по номерам: 1а 2с 3с 4о 5ц 6и 7а 8т 9и 10в 11н 12о 13с 14т 15ь).</p>
+              <p><b>Что вы должны увидеть:</b> при ответе «сразу» ошибки вероятнее всего на длинном умножении (первые и последние цифры правдоподобны, середина — нет) и на подсчёте букв, потому что слово доходит до модели токенами, а не буквами (см. 10.1). В режиме по шагам каждый частичный результат — маленькая задача, и итог чаще верный, но ценой большего числа токенов (значит, времени и денег).</p>
+              <p><b>Вывод:</b> просите рассуждать там, где нужен счёт, логика, многошаговый вывод; для точной арифметики лучше дать модели калькулятор или код (инструмент, как в модуле 6). <b>Риск:</b> длинное рассуждение не гарантирует правоту — оно может быть красивым и неверным, поэтому итог всё равно проверяют.</p>
+            </details></div>
+          </article>
+
+          <!-- SUBMIT -->
+          <article class="task" id="m10-submit">
+            <span class="chip">Отправка</span>
+            <h2>Выводы и проверка файла</h2>
+            <ol>
+              <li>В конце <code>module-1/llm-lab/results.md</code> ответьте на три вопроса (<code>вывод1</code>–<code>вывод3</code>) своими словами: 3–5 предложений каждый, с опорой на ваши числа.</li>
+              <li>Проверьте файл командой в терминале:
+                <pre><code>node lab.js check</code></pre>
+                <b>Ошибки</b> (✗) нужно исправить: для детерминированных заданий команда покажет ожидаемое значение. <b>Предупреждения</b> (⚠) — перепроверить.
+              </li>
+              <li>Когда команда напишет «Готово: results.md заполнен», отправьте файл <code>module-1/llm-lab/results.md</code> на проверку.</li>
+            </ol>
+
+            <h3>Критерии готовности</h3>
+            <ul class="checklist">
+              <li>Все поля заполнены вашими результатами, а не угаданными числами.</li>
+              <li>В каждом разделе есть наблюдение со сравнением прогноза и факта.</li>
+              <li>В 10.4 и 10.5 вы сами сверили ответы модели с источником и калькулятором.</li>
+              <li>Выводы связывают наблюдения с практикой: стоимость, воспроизводимость, надёжность.</li>
+              <li><code>node lab.js check</code> завершилась без ошибок.</li>
+            </ul>
+
+            <h3>Если что-то не работает</h3>
+            <table>
+              <thead><tr><th>Симптом</th><th>Что делать</th></tr></thead>
+              <tbody>
+                <tr><td>Не найден <code>corpus-bpe.txt</code> или <code>lab.js</code></td><td>Терминал не в <code>module-1/llm-lab</code>: откройте эту папку как рабочую или сделайте <code>cd</code> в неё.</td></tr>
+                <tr><td>Русские буквы в консоли «кракозябрами»</td><td>В PowerShell выполните <code>chcp 65001</code> или запускайте команды из терминала IDE.</td></tr>
+                <tr><td>Число токенов не совпало с ожидаемым</td><td>Проверьте кавычки и пробелы: для 10.1 текст должен совпадать посимвольно.</td></tr>
+                <tr><td>Модель в чате полезла в файлы вопреки запрету</td><td>Отметьте это в наблюдении, начните новый чат и повторите.</td></tr>
+                <tr><td>Ответы модели в 10.4 и 10.5 «слишком правильные»</td><td>Нормально для сильных моделей. Опишите это в наблюдении и усложните задачу (см. заметку в 10.5).</td></tr>
+              </tbody>
+            </table>
+          </article>
+          </section>
+
+          <!-- MODULE 11 -->
+          <section class="module-block">
+            <article class="task module-head" id="m11">
+              <span class="chip">Модуль 11</span>
+              <h2>Модели и провайдеры: чем они отличаются на практике</h2>
+            <p>
+            Пять заданий, каждое про одну ось различий: цена и окно, размер модели
+            и сложность задачи, форматы API, каскад «дешёвая → дорогая» и выбор под
+            ограничения. Четыре задания вы считаете и пишете код в папке
+            <code>module-1/model-lab</code>, одно — сравниваете настоящие модели в чате
+            Claude Code. Результаты записываете в
+            <code>module-1/model-lab/results.md</code> и проверяете командой.
+            </p>
+            <div class="note">
+            Как и в модуле 10: сначала <b>прогноз</b>, потом запуск. Модели,
+            провайдеры и цены в <code>module-1/model-lab</code> <b>вымышленные</b>
+            (Aurora, Borealis, Cirrus), но устроены как реальные. Конкретные цифры
+            настоящих моделей быстро устаревают, а навык сравнивать — нет. Нужен
+            Node.js, зависимости не нужны.
+            </div>
+            </article>
+
+<article class="task" id="m11-prep">
+            <span class="chip">Подготовка</span>
+            <h2>Карта различий и подготовка</h2>
+            <p>Провайдер — компания, которая даёт доступ к моделям по API (или выкладывает их веса). Модель — конкретная версия сети. Выбирают не «лучшую модель», а подходящую по нескольким осям сразу:</p>
+            <table>
+              <thead><tr><th>Ось</th><th>Что различается</th><th>Задание</th></tr></thead>
+              <tbody>
+                <tr><td>Цена</td><td>разные тарифы на вход и выход, скидка на кэш, токенизатор считает токены по-своему</td><td>11.1</td></tr>
+                <tr><td>Контекстное окно</td><td>от десятков тысяч до миллиона токенов</td><td>11.1</td></tr>
+                <tr><td>Качество / размер</td><td>большая модель решает сложное, но дороже и медленнее</td><td>11.2, 11.4</td></tr>
+                <tr><td>API и форматы</td><td>другие поля запроса и ответа, лимиты температуры, причины остановки</td><td>11.3</td></tr>
+                <tr><td>Скорость</td><td>время ответа растёт с размером модели</td><td>11.5</td></tr>
+                <tr><td>Возможности и размещение</td><td>зрение, регионы, закрытые данные, open weights на своём железе</td><td>11.5</td></tr>
+              </tbody>
+            </table>
+            <ol>
+              <li>В IDE: <i>File → Open Folder…</i> → выберите папку <code>module-1/model-lab</code>.</li>
+              <li>Откройте терминал (<code>Ctrl+`</code>) и выполните:
+                <pre><code>node lab.js models</code></pre>
+                Должна появиться таблица из семи моделей. Это наш каталог — вернитесь к нему в заданиях 11.1 и 11.5.
+              </li>
+              <li>Откройте <code>results.md</code> и заполните имя, IDE и модель, в которой работаете в чате.</li>
+            </ol>
+            <h3>Как читать каталог</h3>
+            <ul>
+              <li><b>in / out</b> — цена за 1 млн токенов на входе и выходе. Выход почти всегда в 4–5 раз дороже.</li>
+              <li><b>cache</b> — цена входных токенов, прочитанных из кэша. Если начало запроса повторяется (системная инструкция, база знаний), оно стоит в разы дешевле.</li>
+              <li><b>токен.</b> — коэффициент токенизатора. Один и тот же текст у Borealis это 0,9 «эталонного» числа токенов, у Cirrus — 1,15. Запросы в заданиях заданы в эталонных токенах.</li>
+              <li><b>кач.</b> — условный балл 1–5 из учебной таблицы. В жизни такого числа нет: вы получаете его сами через evals (модуль 4).</li>
+              <li><b>Cirrus</b> — модели с открытыми весами: за токены платить не нужно, но нужен свой сервер (ежемесячная плата за хостинг).</li>
+            </ul>
+          </article>
+
+          <!-- TASK 1 -->
+          <article class="task" id="m11-t1">
+            <span class="chip">Задание 11.1</span>
+            <h2>Цена, окно и токенизатор</h2>
+            <div class="goal"><strong>Зачем:</strong> научиться считать, сколько на самом деле стоит сценарий, и увидеть, что «дешёвая» цена за токен не равна дешёвому проекту.</div>
+            <p><b>Теория за минуту.</b> Стоимость запроса = токены входа × цена входа + токены выхода × цена выхода. Токены из кэша стоят дешевле. Сколько именно токенов в тексте, решает токенизатор провайдера, поэтому тот же документ у разных провайдеров весит по-разному, и в окно он помещается тоже по-разному.</p>
+            <p>Сценарий: помощник по базе знаний. Запрос — 6000 токенов входа (из них 5000 — повторяющаяся инструкция и выдержки из базы) и 300 токенов ответа. 20 000 запросов в месяц.</p>
+            <ol>
+              <li><b>Прогноз.</b> Не считая, запишите: какая из пяти облачных моделей (aurora-lite / std / max, borealis-mini / pro) окажется дороже всех и во сколько раз дороже самой дешёвой?</li>
+              <li><b>Замер.</b> Посчитайте месячную стоимость для каждой модели. Например:
+                <pre><code>node lab.js cost aurora-std --in 6000 --out 300 --calls 20000</code></pre>
+                Впишите итог за месяц в ключи <code>1_lite</code>, <code>1_std</code>, <code>1_max</code>, <code>1_mini</code>, <code>1_pro</code>.
+              </li>
+              <li><b>Кэш.</b> Добавьте <code>--cached 5000</code> и пересчитайте для <code>aurora-std</code> (<code>1_std_cache</code>) и <code>borealis-pro</code> (<code>1_pro_cache</code>). Во сколько раз кэш удешевил каждую из них и почему эффект разный?</li>
+              <li><b>Окно и токенизатор.</b> Вам нужно прогнать документ в 115 000 эталонных токенов (плюс ответ). Выполните:
+                <pre><code>node lab.js models --doc 115000</code></pre>
+                Сколько моделей из семи его вмещают? Впишите в <code>1_fit115</code>. Обратите внимание: кому-то документ «подешевел», кому-то «подорожал».
+              </li>
+              <li><b>Свой сервер.</b> У <code>cirrus-70b</code> нет платы за токены, но есть <b>$4800 в месяц</b> за хостинг. Посчитайте вручную, при каком числе запросов в месяц он становится дешевле <code>aurora-std</code> (без кэша). Подсказка: стоимость одного запроса даёт <code>cost</code> с <code>--calls 1</code>. Целое число — в <code>1_breakeven</code>. Проверьте себя командой <code>cost cirrus-70b … --calls &lt;ваше число&gt;</code>.</li>
+              <li>В <code>1_наблюдение</code> напишите 2–3 предложения: что оказалось неожиданным по сравнению с прогнозом.</li>
+            </ol>
+            <div class="qa"><details><summary>Решение</summary>
+              <p><b>Ожидаемые числа</b> (в долларах за месяц): lite — <b>37,50</b>; std — <b>450</b>; max — <b>2250</b>; mini — <b>12,96</b>; pro — <b>189</b>. С кэшем: aurora-std — <b>180</b>, borealis-pro — <b>104,40</b>. Вмещают документ <b>5</b> моделей. Точка безубыточности — около <b>213 333</b> запросов в месяц (4800 / 0,0225).</p>
+              <p><b>Что вы должны увидеть:</b> разброс между самой дешёвой и самой дорогой моделью — почти в 175 раз (12,96 против 2250). Кэш режет стоимость std в 2,5 раза, потому что почти весь вход повторяется. Без кэша borealis-pro дороже, чем «дешёвая» на вид lite, но дешевле std. У pro кэш даёт скидку в 1,8 раза, у std — в 2,5 раза: доля скидки на кэш у Aurora выше (90% против 75% у Borealis), поэтому разрыв между ними сокращается. Документ в 115 000 токенов у Aurora занимает ровно 115 000, у Borealis — 103 500 (токенизатор «короче»), у Cirrus — 132 250 (длиннее), поэтому cirrus-70b с окном 128 000 уже не вмещает его, хотя по цифре окна «должен». Свой сервер окупается только на большом потоке: на 20 000 запросов хостинг в 10 раз дороже, чем платить за std.</p>
+              <p><b>Вывод:</b> сравнивать провайдеров по «цене за миллион токенов» нельзя: нужно считать полный сценарий — свой профиль запросов, долю кэша, соотношение входа и выхода, токенизатор. <b>Риск:</b> цены и условия кэша меняются; расчёт нужно перепроверять по актуальной странице тарифов и вашим логам использования.</p>
+            </details></div>
+          </article>
+
+          <!-- TASK 2 -->
+          <article class="task" id="m11-t2">
+            <span class="chip">Задание 11.2</span>
+            <h2>Размер модели и сложность задачи</h2>
+            <div class="goal"><strong>Зачем:</strong> проверить на настоящих моделях, что большая модель нужна не всегда, и увидеть, где маленькая ошибается.</div>
+            <p><b>Теория за минуту.</b> Внутри одного провайдера обычно есть линейка: маленькая (быстрая и дешёвая), средняя, большая. Простые задачи — классификация, извлечение — маленькая модель решает не хуже большой. Различия проявляются на многошаговых задачах, где нужно держать в голове промежуточные результаты. А ещё помогает рассуждение по шагам (вспомните задание 10.5): иногда оно подтягивает маленькую модель.</p>
+            <p>Шесть задач разной сложности лежат в <code>lab.js</code>: две простые, две средние, две сложные. Их проверка автоматическая, ответ строгий.</p>
+            <ol>
+              <li><b>Прогноз.</b> В блокноте запишите, на каких из шести задач, по-вашему, ошибётся самая маленькая доступная вам модель.</li>
+              <li><b>Выбор моделей.</b> В чате Claude Code откройте меню выбора модели (кнопка модели рядом с полем ввода или команда <code>/model</code>) и выберите <b>самую маленькую</b> из доступных. Впишите её название в <code>2_small_model</code>; название самой большой — в <code>2_large_model</code>.</li>
+              <li><b>Малая модель.</b> Для каждой задачи N от 1 до 6: выведите текст задачи в терминале
+                <pre><code>node lab.js task 1</code></pre>
+                откройте <b>новый чат</b> (<code>/clear</code>), вставьте текст целиком и отправьте. Скопируйте строку «ОТВЕТ: …» из ответа в ключ <code>2_tN_small</code>. Проверить ответ можно сразу:
+                <pre><code>node lab.js grade 1 "ОТВЕТ: negative"</code></pre>
+              </li>
+              <li><b>Большая модель.</b> Переключитесь на самую большую и повторите все шесть задач; ответы — в <code>2_tN_large</code>.</li>
+              <li><b>Рассуждение вместо размера.</b> Вернитесь на малую модель и повторите <b>только те задачи, где она ошиблась</b>, но возьмите вариант с шагами:
+                <pre><code>node lab.js task 5 --steps</code></pre>
+                Что получилось: какие задачи исправились, какие нет? Запишите в <code>2_fix</code>. Если малая модель не ошибалась, напишите «ошибок не было» и добавьте, на какой задаче, по вашему мнению, она была ближе всего к ошибке.
+              </li>
+              <li>В <code>2_наблюдение</code>: на каких задачах модели разошлись и совпал ли ваш прогноз.</li>
+            </ol>
+            <div class="note">Модель недетерминирована: на соседнем запуске результат может отличаться. Это нормально. Команда <code>check</code> не требует, чтобы малая модель ошибалась, она проверяет, что вы записали настоящие ответы двух разных моделей. Если сомневаетесь, запустите задачу повторно и укажите оба результата в наблюдении.</div>
+            <div class="qa"><details><summary>Решение</summary>
+              <p><b>Правильные ответы:</b> 1 — <code>negative</code>; 2 — <code>2024-11-14</code>; 3 — <code>1125,45</code> (1200,50 × 0,9 + 45); 4 — <code>2</code> (стандартная сортировка сравнивает как строки: получается <code>[10, 100, 2, 9]</code>, берём элемент с индексом 2); 5 — <code>Глеб, Анна, Дина, Борис, Вера</code>; 6 — <code>52</code> (7 → 22 → 11 → 34 → 17 → 52).</p>
+              <p><b>Что вы должны увидеть:</b> на задачах 1–2 маленькая и большая модели совпадают. Разница чаще всего проступает на задачах 4–6: им нужна «симуляция» нескольких шагов, а ответ просили без рассуждений, так что модель должна выполнить все шаги «в голове» за один токен-ответ. Если у маленькой модели такие ошибки были, версия с <code>--steps</code> часто их исправляет: промежуточные шаги записаны в текст, модель опирается на написанное, как мы видели в 10.5. У современных линеек разрыв может быть небольшим, и это тоже результат: тогда платить за большую модель на таких задачах не нужно.</p>
+              <p><b>Вывод:</b> «больше» не значит «лучше для каждой задачи»: простые задачи отдают маленькой модели, сложные — большой или маленькой с рассуждением. Решение принимается по замеру на ваших данных, а не по названию тарифа. <b>Риск:</b> шесть задач — это демонстрация, а не бенчмарк. Для настоящего выбора нужен набор из десятков примеров из вашего проекта (модуль 4) и несколько прогонов.</p>
+            </details></div>
+          </article>
+
+          <!-- TASK 4 -->
+          <article class="task" id="m11-t4">
+            <span class="chip">Задание 11.4</span>
+            <h2>Каскад: дешёвая модель сначала</h2>
+            <div class="goal"><strong>Зачем:</strong> увидеть, как комбинация моделей даёт качество близкое к большой по цене, близкой к малой, и от чего этот выигрыш зависит.</div>
+            <p><b>Теория за минуту.</b> Не все запросы одинаково сложны. Каскад (маршрутизация): сначала спрашиваем дешёвую модель; если она «уверена», берём её ответ; иначе передаём запрос большой. За неуверенный запрос платим дважды, зато основной поток остаётся дешёвым. Ключевое условие — <b>уверенность должна совпадать с правильностью</b> (калибровка): если малая модель одинаково уверенно ошибается и отвечает верно, порог ничего не отсеивает.</p>
+            <p>Команда <code>cascade</code> прогоняет симуляцию на 1000 задач (35% трудных): малая модель — aurora-lite, большая — aurora-max, цены из каталога. Это <b>симуляция</b>, а не измерение настоящих моделей, но логика ровно та же.</p>
+            <ol>
+              <li><b>Прогноз.</b> Запишите: если малая модель верна в ~75% случаев, а большая в ~96%, можно ли получить точность 90% и сколько процентов задач придётся отдавать большой?</li>
+              <li><b>Опорные точки.</b> Запустите
+                <pre><code>node lab.js cascade --threshold 0.8</code></pre>
+                В последней строке — точность «всё в малую» и «всё в большую». Впишите их в <code>4_small_acc</code> и <code>4_large_acc</code> (в процентах).
+              </li>
+              <li><b>Подбор порога.</b> Меняйте <code>--threshold</code> (шаг 0,05: 0,5; 0,55; 0,6 …). Найдите <b>наименьший</b> порог, при котором точность каскада ≥ 90%. Впишите в <code>4_th90</code>. Экономию против «всё в большую» (в процентах от её стоимости) — в <code>4_save90</code>.</li>
+              <li><b>Плохая калибровка.</b> Повторите поиск, но с флагом <code>--calibration bad</code> — малая модель одинаково уверена всегда. Какая экономия при точности ≥ 90% теперь? Впишите в <code>4_bad_save90</code> (0, если дешевле «всё в большую» выйти не получается).
+                <pre><code>node lab.js cascade --threshold 0.9 --calibration bad</code></pre>
+              </li>
+              <li>В <code>4_наблюдение</code> напишите, почему порог не должен быть «как можно выше», и чем плохая калибровка разрушает идею каскада.</li>
+            </ol>
+            <div class="qa"><details><summary>Решение</summary>
+              <p><b>Ожидаемые значения:</b> <code>4_small_acc</code> = <b>74,5</b>; <code>4_large_acc</code> = <b>95,8</b>. Порог для точности ≥ 90% — <b>0,6</b> (точность 90,1%, в большую уходит 17,5% задач, стоимость $10,06 против $52,50): экономия около <b>81%</b>. При плохой калибровке до 90% удаётся добраться только с порогом около 0,95, и стоимость ($44,98) всего примерно на <b>14%</b> ниже, чем «всё в большую».</p>
+              <p><b>Что вы должны увидеть:</b> хорошо откалиброванный каскад получает почти качество большой модели за пятую часть цены. Интересная деталь: при порогах 0,75–0,8 точность каскада (96,7%) даже выше, чем у одной большой (95,8%): там, где большая модель ошибалась, малая иногда отвечала верно, и мы её слушали. При слишком высоком пороге выигрыш пропадает: точность перестаёт расти, а деньги — тратятся, потому что за каждую «сомнительную» задачу платим дважды. При плохой калибровке уверенность не отличает правильные ответы от неправильных, поэтому приходится отдавать большой почти всё.</p>
+              <p><b>Вывод:</b> каскад выгоден, если у вас есть надёжный сигнал «справился ли дешёвый ответ»: уверенность модели, валидация формата, проверка тестами, второй дешёвый проход. Порог подбирается на размеченных данных (модуль 4), а не на глаз. <b>Риск:</b> «самооценка уверенности» у настоящих моделей часто плохо откалибрована, поэтому в жизни её заменяют или дополняют проверками на выходе; на задержке каскад тоже теряет — ответ ждёт две модели.</p>
+            </details></div>
+          </article>
+
+          <!-- SUBMIT -->
+          <article class="task" id="m11-submit">
+            <span class="chip">Отправка</span>
+            <h2>Выводы и проверка файла</h2>
+            <ol>
+              <li>В конце <code>module-1/model-lab/results.md</code> ответьте на три вопроса своими словами (3–5 предложений каждый, со ссылками на ваши числа).</li>
+              <li>Проверьте файл командой в терминале:
+                <pre><code>node lab.js check</code></pre>
+                Команда сверяет расчёты, ответы моделей, тесты вашего <code>adapter.js</code> и выбор из задания 11.5. <b>Ошибки</b> нужно исправить; <b>предупреждения</b> — перепроверить.
+              </li>
+              <li>Когда команда напишет «Готово: results.md заполнен», отправьте на проверку два файла: <code>module-1/model-lab/results.md</code> и <code>module-1/model-lab/adapter.js</code>.</li>
+            </ol>
+
+            <h3>Критерии готовности</h3>
+            <ul class="checklist">
+              <li>Все расчёты 11.1 и 11.4 совпали с командами лаборатории.</li>
+              <li>В 11.2 вписаны настоящие ответы двух разных моделей из чата, а не придуманные.</li>
+              <li><code>node lab.js adapter</code> показывает 15 из 15.</li>
+              <li>Для каждого сценария 11.5 выбор подтверждён командой <code>pick</code>.</li>
+              <li>В каждом разделе есть наблюдение, сравнивающее прогноз с результатом.</li>
+              <li>Выводы называют ось, которая чаще всего решает выбор, и риск вашего подхода.</li>
+              <li><code>node lab.js check</code> завершилась без ошибок.</li>
+            </ul>
+
+            <h3>Если что-то не работает</h3>
+            <table>
+              <thead><tr><th>Симптом</th><th>Что делать</th></tr></thead>
+              <tbody>
+                <tr><td>«Cannot find module» или не находит <code>lab.js</code></td><td>Терминал не в <code>module-1/model-lab</code>: откройте папку как рабочую или сделайте <code>cd</code> в неё.</td></tr>
+                <tr><td>В чате нет выбора моделей</td><td>Попробуйте команду <code>/model</code>. Если доступна одна модель, возьмите ту же в двух режимах (с рассуждением и без) и честно укажите это в наблюдении. Тогда в <code>2_small_model</code> и <code>2_large_model</code> впишите разные названия режимов.</td></tr>
+                <tr><td>Модель не прислала «ОТВЕТ: …»</td><td>Повторите запрос с той же формулировкой; в <code>results.md</code> нужна именно строка с «ОТВЕТ:».</td></tr>
+                <tr><td>Тесты <code>adapter</code> падают с «not implemented»</td><td>Вы ещё не заменили <code>throw</code> в функции для этого провайдера.</td></tr>
+                <tr><td>Числа расходятся на копейки</td><td>Допуск 1,5–3%. Если расхождение больше, проверьте, что вход и выход заданы в эталонных токенах и указан <code>--cached</code>.</td></tr>
+              </tbody>
+            </table>
+          </article>
+          </section>
+
+          <!-- MODULE 12 -->
+          <section class="module-block">
+            <article class="task module-head" id="m12">
+              <span class="chip">Модуль 12</span>
+              <h2>Использование LLM через API: как параметры запроса меняют ответ</h2>
+            <p>
+            Пять заданий. Во всех вы отправляете запросы в настоящий API Claude.
+            В каждом задании вы берёте готовое тело запроса, меняете один параметр
+            и смотрите, как изменился ответ модели. Код писать не нужно.
+            </p>
+            <div class="note">
+            Понадобятся ключ API и Node.js 18 или новее. Модель — <b>claude-haiku-5-5</b>,
+            самая дешёвая в линейке, вся лаборатория стоит доли цента. Ключ не вставляйте
+            в файлы проекта.
+            </div>
+            </article>
+
+<article class="task" id="m12-prep">
+            <span class="chip">Подключение</span>
+            <h2>Подключаемся к API</h2>
+
+            <h3>Шаг 1. Получите ключ</h3>
+            <ol>
+              <li>Зарегистрируйтесь в консоли Anthropic (console.anthropic.com).</li>
+              <li>В разделе API keys создайте ключ. Он начинается с <code>sk-ant-</code>. Скопируйте его сразу: повторно он не показывается.</li>
+              <li>Пополните баланс на небольшую сумму и настройте лимит расходов.</li>
+            </ol>
+
+            <h3>Шаг 2. Передайте ключ через переменную окружения</h3>
+            <p>Если терминал в IDE — Git Bash, на время сессии:</p>
+            <pre><code>export ANTHROPIC_API_KEY="sk-ant-ваш-ключ"</code></pre>
+            <p>Если PowerShell — на время сессии:</p>
+            <pre><code>$env:ANTHROPIC_API_KEY = "sk-ant-ваш-ключ"</code></pre>
+            <p>Переменная живёт только в этом терминале. Сохранять ключ в файлах проекта не нужно.</p>
+
+            <h3>Шаг 3. Проверьте подключение</h3>
+            <pre><code>node module-1/api-lab/lab.js ping</code></pre>
+            <p>Должно появиться короткое слово от модели и строка <code>stop_reason: end_turn</code>. Все команды запускайте из корня проекта.</p>
+          </article>
+
+          <article class="task" id="m12-body">
+            <span class="chip">Тело запроса</span>
+            <h2>Что такое тело запроса</h2>
+            <p><b>Тело запроса</b> — это JSON-файл, который лаборатория отправляет в API. Модель, лимит ответа, инструкция, переписка и параметры вроде <code>stop_sequences</code> записаны в нём. Каждый эксперимент — один такой файл в папке <code>module-1/api-lab/experiments/</code>.</p>
+            <pre><code>{
+  "model": "claude-haiku-5-5",
+  "max_tokens": 200,
+  "system": "Отвечай коротко, простыми словами.",
+  "messages": [
+    { "role": "user", "content": "Что такое токен?" }
+  ]
+}</code></pre>
+            <table>
+              <thead><tr><th>Поле</th><th>Что меняет</th></tr></thead>
+              <tbody>
+                <tr><td><code>model</code></td><td>Какая модель отвечает</td></tr>
+                <tr><td><code>max_tokens</code></td><td>Максимальную длину ответа</td></tr>
+                <tr><td><code>system</code></td><td>Инструкцию, как модели отвечать</td></tr>
+                <tr><td><code>messages</code></td><td>Переписку: вопросы пользователя и ответы модели</td></tr>
+                <tr><td><code>stop_sequences</code></td><td>Строки, на которых генерация останавливается сама</td></tr>
+                <tr><td><code>tool_choice</code></td><td>Разрешено ли модели вызывать инструменты из <code>tools</code></td></tr>
+                <tr><td><code>tools</code></td><td>Описание инструментов, которые модель может попросить вызвать</td></tr>
+              </tbody>
+            </table>
+
+            <h3>Как менять тело</h3>
+            <ol>
+              <li>Посмотрите тело: <pre><code>node module-1/api-lab/lab.js show 01</code></pre></li>
+              <li>Скопируйте файл в папке <code>module-1/api-lab/experiments/</code> с новым именем. Добавьте букву к номеру, например <code>01x-no-answer.json</code>. Оригинал не трогайте.</li>
+              <li>Откройте копию в редакторе и поменяйте один параметр, как написано в задании. Запятые и кавычки оставьте на месте: JSON не терпит лишних символов.</li>
+              <li>Посмотрите тело ещё раз: <pre><code>node module-1/api-lab/lab.js show 01x</code></pre></li>
+              <li>Отправьте в API: <pre><code>node module-1/api-lab/lab.js run 01x</code></pre></li>
+            </ol>
+          </article>
+
+          <!-- TASK 1 -->
+          <article class="task" id="m12-t1">
+            <span class="chip">Задание 1</span>
+            <h2>Память: что модель знает из запроса</h2>
+            <div class="goal"><strong>Смысл:</strong> модель помнит только то, что передано в этом запросе.</div>
+            <ol>
+              <li>Запустите базовый эксперимент: <pre><code>node module-1/api-lab/lab.js run 01</code></pre> В нём переписка из трёх сообщений: вопрос, ответ модели, уточнение.</li>
+              <li><b>Правка.</b> Скопируйте <code>01-history-full.json</code> в <code>01x-no-answer.json</code>. Удалите весь объект, который начинается с <code>{ "role": "assistant"</code>, вместе с запятой после него. Больше ничего не меняйте.</li>
+              <li>Запустите копию: <pre><code>node module-1/api-lab/lab.js run 01x</code></pre></li>
+              <li>Сравните ответы. Запишите в <code>module-1/api-lab/results.md</code>, раздел 1.</li>
+            </ol>
+            <div class="qa"><details><summary>Что должно получиться</summary>
+              <p>В базовом запуске модель отвечает по существу, потому что видит свой прошлый ответ. Без этого ответа она отвечает общими словами или переспрашивает. Память диалога — это то, что клиент отправил, а не то, что модель «запомнила».</p>
+            </details></div>
+          </article>
+
+          <!-- TASK 2 -->
+          <article class="task" id="m12-t2">
+            <span class="chip">Задание 2</span>
+            <h2>Инструкция в system</h2>
+            <div class="goal"><strong>Смысл:</strong> поле <code>system</code> задаёт манеру ответа, и модель ей следует.</div>
+            <ol>
+              <li>Запустите базовый эксперимент: <pre><code>node module-1/api-lab/lab.js run 03a</code></pre> Он задаёт вопрос «Что такое токен?» и инструкцию «Ты помощник по программированию. Отвечай коротко, простыми словами.»</li>
+              <li><b>Правка.</b> Скопируйте <code>03a-system-field.json</code> в <code>03x-short.json</code>. Замените текст в <code>system</code> на <code>Отвечай одним словом.</code></li>
+              <li>Запустите копию: <pre><code>node module-1/api-lab/lab.js run 03x</code></pre></li>
+              <li>Сравните длину ответов. Запишите в <code>module-1/api-lab/results.md</code>, раздел 2.</li>
+            </ol>
+            <div class="qa"><details><summary>Что должно получиться</summary>
+              <p>Ответ заметно короче, а иногда в одно слово. Инструкция в <code>system</code> действует на весь диалог, поэтому её можно менять, не переписывая вопрос.</p>
+            </details></div>
+          </article>
+
+          <!-- TASK 3 -->
+          <article class="task" id="m12-t3">
+            <span class="chip">Задание 3</span>
+            <h2>max_tokens: лимит, при котором ответ обрывается</h2>
+            <div class="goal"><strong>Смысл:</strong> лимит обрывает текст без ошибки. Смотрите на <code>stop_reason</code>.</div>
+            <ol>
+              <li>Запустите базовый эксперимент с лимитом 10 токенов: <pre><code>node module-1/api-lab/lab.js run 04</code></pre></li>
+              <li><b>Правка.</b> Скопируйте <code>04-max-tokens-10.json</code> в <code>04x-long.json</code>. Поменяйте <code>"max_tokens": 10</code> на <code>400</code>.</li>
+              <li>Запустите копию: <pre><code>node module-1/api-lab/lab.js run 04x</code></pre></li>
+              <li>Сравните <code>stop_reason</code> и конец текста в обоих запусках. Запишите в <code>module-1/api-lab/results.md</code>, раздел 3.</li>
+            </ol>
+            <div class="qa"><details><summary>Что должно получиться</summary>
+              <p>При 10 токенах текст обрывается посреди фразы, <code>stop_reason: max_tokens</code>. При 400 текст полный, <code>stop_reason: end_turn</code>. Ошибки нет в обоих случаях, поэтому смотреть нужно на <code>stop_reason</code>.</p>
+            </details></div>
+          </article>
+
+          <!-- TASK 4 -->
+          <article class="task" id="m12-t4">
+            <span class="chip">Задание 4</span>
+            <h2>stop_sequences: остановка на заданной строке</h2>
+            <div class="goal"><strong>Смысл:</strong> <code>stop_sequences</code> говорит модели, на какой строке остановиться. Так можно обрывать ответ по смыслу, а не по числу токенов.</div>
+            <ol>
+              <li>Запустите базовый эксперимент: <pre><code>node module-1/api-lab/lab.js run 09</code></pre> В теле задано <code>"stop_sequences": ["."]</code>: модель должна остановиться на первой точке.</li>
+              <li><b>Правка.</b> Скопируйте <code>09-stop-sequence.json</code> в <code>09x-no-stop.json</code>. Удалите строку <code>"stop_sequences": ["."],</code> целиком. Больше ничего не меняйте.</li>
+              <li>Запустите копию: <pre><code>node module-1/api-lab/lab.js run 09x</code></pre></li>
+              <li>Сравните текст ответа и <code>stop_reason</code> в обоих запусках. Запишите в <code>module-1/api-lab/results.md</code>, раздел 4.</li>
+            </ol>
+            <div class="qa"><details><summary>Что должно получиться</summary>
+              <p>В базовом запуске ответ обрывается на первой точке, <code>stop_reason: stop_sequence</code>. Сама точка в тексте не остаётся. Без параметра модель пишет оба предложения, <code>stop_reason: end_turn</code>.</p>
+              <p><b>Вывод:</b> <code>stop_sequences</code> работает как остановка по содержанию. Так ответ можно обрывать на разделителе, например на закрывающей скобке JSON, не угадывая число токенов.</p>
+            </details></div>
+          </article>
+
+          <!-- TASK 5 -->
+          <article class="task" id="m12-t5">
+            <span class="chip">Задание 5</span>
+            <h2>tool_choice: запретить модели вызывать инструмент</h2>
+            <div class="goal"><strong>Смысл:</strong> модель вызывает инструмент, когда он описан в запросе и вопрос к нему подходит. <code>tool_choice</code> управляет этим выбором.</div>
+            <ol>
+              <li>Запустите базовый эксперимент: <pre><code>node module-1/api-lab/lab.js run 07</code></pre> В выводе найдите строку «Модель просит инструмент» и <code>stop_reason: tool_use</code>.</li>
+              <li><b>Правка.</b> Скопируйте <code>07-tool-request.json</code> в <code>07x-no-tools.json</code>. Добавьте строку, поставив её между <code>"thinking"</code> и <code>"tools"</code>:
+                <pre><code>  "tool_choice": { "type": "none" },</code></pre>
+                Не забудьте запятую в конце строки. Остальное не меняйте.
+              </li>
+              <li>Запустите копию: <pre><code>node module-1/api-lab/lab.js run 07x</code></pre></li>
+              <li>Сравните ответы. Запишите в <code>module-1/api-lab/results.md</code>, раздел 5.</li>
+            </ol>
+            <div class="qa"><details><summary>Что должно получиться</summary>
+              <p>В базовом запуске модель просит инструмент и передаёт <code>order_id</code>. В копии инструмент описан, но вызывать его запрещено: модель отвечает текстом, <code>stop_reason: end_turn</code>, блока <code>tool_use</code> нет.</p>
+              <p><b>Вывод:</b> описание инструмента ещё не значит, что модель его вызовет. Решение принимает запрос, а не модель. Значение <code>auto</code> разрешает модели выбирать, <code>none</code> запрещает вызов полностью.</p>
+            </details></div>
+          </article>
+
+          <!-- SUBMIT -->
+          <article class="task" id="m12-submit">
+            <span class="chip">Отправка</span>
+            <h2>Ответы и проверка</h2>
+            <ol>
+              <li>Ответьте на пять вопросов в <code>module-1/api-lab/results.md</code>. Замените все TODO. В каждом разделе: что изменили, что ожидали, что получили, одна фраза вывода.</li>
+              <li>Проверьте:
+                <pre><code>node module-1/api-lab/lab.js check</code></pre>
+                Должна быть строка «Готово».
+              </li>
+            </ol>
+
+            <h3>Если что-то не работает</h3>
+            <table>
+              <thead><tr><th>Симптом</th><th>Что делать</th></tr></thead>
+              <tbody>
+                <tr><td>«ключ не задан» или 401</td><td>Задайте переменную в этом терминале (шаг 2). Проверьте, что ключ скопирован целиком.</td></tr>
+                <tr><td>«JSON» или «Unexpected token» при запуске копии</td><td>Лишняя или пропущенная запятая, кавычка. Сравните копию с оригиналом.</td></tr>
+                <tr><td>«подходит к нескольким»</td><td>Укажите точное имя, которое выводит <code>node module-1/api-lab/lab.js list</code>.</td></tr>
+                <tr><td>429 или 529</td><td>Сервис занят. Подождите минуту и повторите.</td></tr>
+                <tr><td>Модель не попросила инструмент в базовом запуске 07</td><td>Ответ недетерминирован. Повторите команду.</td></tr>
+                <tr><td><code>Cannot find module</code></td><td>Запускайте команды из корня проекта, а не из папки <code>module-1/api-lab</code>.</td></tr>
+              </tbody>
+            </table>
+          </article>
+          </section>
 
           <div class="pager">
             <a href="index.html"

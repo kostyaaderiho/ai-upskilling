@@ -1,0 +1,18 @@
+{
+  "ok": {
+    "candidates": [
+      { "content": { "role": "model", "parts": [{ "text": "Пароль сброшен." }] }, "finishReason": "STOP" }
+    ],
+    "usageMetadata": { "promptTokenCount": 37, "candidatesTokenCount": 5, "totalTokenCount": 42 }
+  },
+  "cut": {
+    "candidates": [
+      { "content": { "role": "model", "parts": [{ "text": "Шаг 1. Откройте настройки. " }, { "text": "Шаг 2. Выбери" }] }, "finishReason": "MAX_TOKENS" }
+    ],
+    "usageMetadata": { "promptTokenCount": 47, "candidatesTokenCount": 11, "totalTokenCount": 58 }
+  },
+  "refused": {
+    "candidates": [{ "finishReason": "SAFETY" }],
+    "usageMetadata": { "promptTokenCount": 27, "totalTokenCount": 27 }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "model": "claude-haiku-5-5",
+  "max_tokens": 200,
+  "thinking": { "type": "disabled" },
+  "system": "Ты помощник по программированию. Отвечай коротко, простыми словами.",
+  "messages": [
+    { "role": "user", "content": "Что такое токен?" }
+  ]
+}

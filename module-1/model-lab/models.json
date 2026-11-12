@@ -1,0 +1,12 @@
+{
+  "_note": "Учебный каталог с ВЫМЫШЛЕННЫМИ моделями и ценами. Цены — USD за 1 млн токенов. Реальные цены и лимиты меняются — смотрите страницы провайдеров.",
+  "models": [
+    { "id": "aurora-lite",   "provider": "Aurora",   "quality": 2, "ctx": 128000,  "in": 0.25, "out": 1.25,  "cached": 0.025, "tok": 1.0,  "vision": false, "regions": ["US", "EU"], "p95_ms": 900,  "hosting": 0 },
+    { "id": "aurora-std",    "provider": "Aurora",   "quality": 4, "ctx": 200000,  "in": 3.0,  "out": 15.0,  "cached": 0.30,  "tok": 1.0,  "vision": true,  "regions": ["US", "EU"], "p95_ms": 2400, "hosting": 0 },
+    { "id": "aurora-max",    "provider": "Aurora",   "quality": 5, "ctx": 200000,  "in": 15.0, "out": 75.0,  "cached": 1.5,   "tok": 1.0,  "vision": true,  "regions": ["US", "EU"], "p95_ms": 6500, "hosting": 0 },
+    { "id": "borealis-mini", "provider": "Borealis", "quality": 2, "ctx": 1000000, "in": 0.10, "out": 0.40,  "cached": 0.025, "tok": 0.9,  "vision": true,  "regions": ["US"],       "p95_ms": 700,  "hosting": 0 },
+    { "id": "borealis-pro",  "provider": "Borealis", "quality": 4, "ctx": 1000000, "in": 1.25, "out": 10.0,  "cached": 0.31,  "tok": 0.9,  "vision": true,  "regions": ["US", "EU"], "p95_ms": 2800, "hosting": 0 },
+    { "id": "cirrus-8b",     "provider": "Cirrus (open weights)", "quality": 1, "ctx": 32000,  "in": 0, "out": 0, "cached": 0, "tok": 1.15, "vision": false, "regions": ["self"], "p95_ms": 1200, "hosting": 600 },
+    { "id": "cirrus-70b",    "provider": "Cirrus (open weights)", "quality": 3, "ctx": 128000, "in": 0, "out": 0, "cached": 0, "tok": 1.15, "vision": false, "regions": ["self"], "p95_ms": 3500, "hosting": 4800 }
+  ]
+}

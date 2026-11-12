@@ -1,0 +1,5 @@
+The customer opens the application and tries to log in with a password. If the password is wrong, the system shows an error message and the user can try again. After three failed attempts the account is locked and the customer must reset the password by email. The reset link works only once and expires after one hour.
+A good test checks one small behavior. The tester writes the steps, the expected result and the actual result. When the actual result differs from the expected result, the tester reports a bug with a clear title, steps to reproduce and a screenshot.
+Language models read text as tokens. A token is a piece of a word, a whole word or a single character. Common words are usually one token, while rare words are split into several pieces. The model predicts the next token again and again, and this is how a long answer appears.
+The system processes every request, validates the input, saves the result to the database and returns a response to the customer. The developer reviews the code, the tester verifies the behavior and the team releases the new version of the application.
+Клиент вводит пароль. Система проверяет пароль.

@@ -1,0 +1,8 @@
+{
+  "model": "claude-haiku-5-5",
+  "max_tokens": 10,
+  "thinking": { "type": "disabled" },
+  "messages": [
+    { "role": "user", "content": "Опиши в трёх абзацах, что такое API модели." }
+  ]
+}

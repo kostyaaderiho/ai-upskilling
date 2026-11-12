@@ -1,0 +1,26 @@
+{
+  "ok": {
+    "id": "cmpl-01",
+    "object": "chat.completion",
+    "choices": [
+      { "index": 0, "message": { "role": "assistant", "content": "Пароль сброшен." }, "finish_reason": "stop" }
+    ],
+    "usage": { "prompt_tokens": 47, "completion_tokens": 7, "total_tokens": 54 }
+  },
+  "cut": {
+    "id": "cmpl-02",
+    "object": "chat.completion",
+    "choices": [
+      { "index": 0, "message": { "role": "assistant", "content": "Шаг 1. Откройте настройки. Шаг 2. Выбери" }, "finish_reason": "length" }
+    ],
+    "usage": { "prompt_tokens": 60, "completion_tokens": 14, "total_tokens": 74 }
+  },
+  "refused": {
+    "id": "cmpl-03",
+    "object": "chat.completion",
+    "choices": [
+      { "index": 0, "message": { "role": "assistant", "content": null }, "finish_reason": "content_filter" }
+    ],
+    "usage": { "prompt_tokens": 35, "completion_tokens": 0, "total_tokens": 35 }
+  }
+}

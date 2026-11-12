@@ -11,11 +11,14 @@
       <div class="container">
         <span class="brand"><a href="index.html">← AI Upskilling</a></span>
         <nav>
+          <a href="#theory">Теория</a>
+          <a href="#project">Проект</a>
           <a href="#t1">3.1</a>
           <a href="#t2">3.2</a>
           <a href="#t3">3.3</a>
           <a href="#t4">3.4</a>
           <a href="#t5">3.5</a>
+          <a href="#final">Итог</a>
         </nav>
       </div>
     </div>
@@ -25,352 +28,2357 @@
         <span class="num">Модуль 3</span>
         <h1>AI-assisted SDLC с coding agents</h1>
         <p>
-          Здесь вы перестаёте печатать каждую строку сами и начинаете направлять
-          AI-агента: Copilot, Claude Code или Cursor. Вы соберёте каркас сервиса
-          KnowledgeBot (<code>POST /ask</code>), но главное — освоите
-          контролируемый процесс: план → ограниченная область → проверка diff →
-          тесты.
+          Цель модуля — научиться работать с coding agent как с управляемым
+          процессом: правила → спецификация → реализация с тестами → проверка →
+          PR. Результат модуля — способ работы, а не код. Поэтому проверяются
+          артефакты: файлы правил, спецификация, история коммитов, журнал
+          <code>docs/notes.md</code>, PR и заметка о решениях.
         </p>
         <div class="note">
-          Задания можно выполнять в VS Code с GitHub Copilot или в Claude Code /
-          Cursor. Код сервиса — на FastAPI, но акцент модуля на
-          <b>процессе работы с агентом</b>.
+          <b>Как проходить модуль.</b> Сначала курсы теории, затем задания
+          3.1–3.5 по порядку, затем итоговое. Если тему задания вы уверенно
+          знаете, можно не разбираться в ней подробно, но
+          <b>файлы из задания всё равно должны появиться</b>: итоговое задание
+          опирается на <code>CLAUDE.md</code> из 3.1, Spec Kit из 3.3, hooks,
+          команду <code>/new-endpoint</code> и репозиторий на GitHub из 3.5.
+          Модуль засчитан, когда итоговое задание выполнено по всем критериям.
+        </div>
+        <div class="note">
+          <b>Как проверяется.</b> Все задания, включая итоговое, вы проверяете
+          сами. Порядок: сделали задание → прошли по критериям готовности →
+          только потом открыли пример решения и сравнили. Каждый критерий
+          проверяется командой, через git или по записи в
+          <code>docs/notes.md</code>. Если критерий не выполнен, вернитесь к
+          заданию, а не к решению. Записи в <code>docs/notes.md</code>
+          коммитьте вместе с работой задания.
+        </div>
+        <div class="note">
+          <b>Инструмент и стек:</b> основной инструмент — <b>Claude Code</b>,
+          всё обязательное делается в нём. Copilot и Cursor — только в
+          необязательных шагах для тех, кто ими пользуется, и в необязательном
+          сравнении. Учебный проект: TypeScript, Node.js 20+, Express, Vitest,
+          ESLint.
+        </div>
+        <div class="note">
+          <b>Команды копируются.</b> У блоков кода есть кнопка «Копировать», а
+          команды внутри текста — пунктирные, вроде
+          <code>npm run check</code> — копируются по клику или с клавиатуры
+          (Tab, затем Enter).
         </div>
       </section>
 
       <div class="layout">
         <aside class="toc">
-          <h4>Задания модуля</h4>
-          <ol>
-            <li><a href="#t1">GitHub Copilot в работе</a></li>
-            <li><a href="#t2">Claude Code и CLAUDE.md</a></li>
-            <li><a href="#t3">Spec-driven development</a></li>
-            <li><a href="#t4">Проверка вывода агента</a></li>
-            <li><a href="#t5">Свои команды и review</a></li>
+          <h4>Модуль</h4>
+          <ol class="plain">
+            <li><a href="#theory">Теория и темы модуля</a></li>
+            <li><a href="#project">Учебный проект</a></li>
+            <li><a href="#t1">Задание 3.1 Правила агента</a></li>
+            <li><a href="#t2">Задание 3.2 Отладка и тесты</a></li>
+            <li><a href="#t3">Задание 3.3 Spec Kit</a></li>
+            <li><a href="#t4">Задание 3.4 Агентный режим и проверка</a></li>
+            <li><a href="#t5">Задание 3.5 Команды, hooks, MCP</a></li>
+            <li><a href="#final">Итоговое задание</a></li>
           </ol>
         </aside>
 
         <main>
-          <!-- 3.1 -->
+          <!-- THEORY -->
+          <article class="task theory" id="theory">
+            <span class="chip">Теория</span>
+            <h2>Курсы и темы модуля</h2>
+
+            <h3>Курсы модуля</h3>
+            <p>Все 8 курсов обязательны.</p>
+            <table>
+              <tr>
+                <th>Курс</th>
+                <th>Задания</th>
+              </tr>
+              <tr>
+                <td>AI-Assisted Engineering (2h30)</td>
+                <td>3.2</td>
+              </tr>
+              <tr>
+                <td>GitHub Copilot Capabilities (1h)</td>
+                <td>3.1, 3.4, 3.5</td>
+              </tr>
+              <tr>
+                <td>AI SDLC: Cursor Basics 101 (2h15)</td>
+                <td>3.1, 3.2, 3.5</td>
+              </tr>
+              <tr>
+                <td>EngX.AI Bootcamp for Software Engineers (4h30)</td>
+                <td>3.3, 3.4, итог</td>
+              </tr>
+              <tr>
+                <td>AI-Native SDLC and Modernization (34 min)</td>
+                <td>3.1, 3.5, итог</td>
+              </tr>
+              <tr>
+                <td>Spec-Driven Development with GitHub Spec Kit (48 min)</td>
+                <td>3.3</td>
+              </tr>
+              <tr>
+                <td>Claude Code in Action by Anthropic (1h11)</td>
+                <td>3.1, 3.5</td>
+              </tr>
+              <tr>
+                <td>Structured Vibe Coding with AI Coding Agents (1h20)</td>
+                <td>3.1, 3.4</td>
+              </tr>
+            </table>
+
+            <h3>Темы модуля и где они отрабатываются</h3>
+            <p>
+              Каждая тема курсов модуля закреплена шагом задания или критерием
+              итогового задания.
+            </p>
+            <table>
+              <tr>
+                <th>Тема</th>
+                <th>Где отрабатывается</th>
+              </tr>
+              <tr>
+                <td>Тесты с бизнес-смыслом, а не по коду</td>
+                <td>3.2, B-1</td>
+              </tr>
+              <tr>
+                <td>Промпт «ошибка + код + ожидаемое поведение»</td>
+                <td>3.2, B-2</td>
+              </tr>
+              <tr>
+                <td>Декомпозиция: подзадачи, иерархия, зависимости</td>
+                <td>3.2, B-4</td>
+              </tr>
+              <tr>
+                <td>Правила проекта для Copilot</td>
+                <td>3.1</td>
+              </tr>
+              <tr>
+                <td>Выбор режима: inline, Ask, Agent</td>
+                <td>3.4</td>
+              </tr>
+              <tr>
+                <td>MCP для трекера задач</td>
+                <td>3.5</td>
+              </tr>
+              <tr>
+                <td>Галлюцинация импорта: проверить и вернуть ошибку агенту</td>
+                <td>3.2</td>
+              </tr>
+              <tr>
+                <td>Личные правила для всех проектов (User Rules)</td>
+                <td>3.1</td>
+              </tr>
+              <tr>
+                <td>Команда для повторяющегося промпта</td>
+                <td>3.5</td>
+              </tr>
+              <tr>
+                <td>Точная спецификация как главный контроль</td>
+                <td>3.3</td>
+              </tr>
+              <tr>
+                <td>Детерминированные проверки для вывода агента</td>
+                <td>3.4</td>
+              </tr>
+              <tr>
+                <td>Решение о merge принимает человек</td>
+                <td>3.4, итог</td>
+              </tr>
+              <tr>
+                <td>AI Champion, общие настройки в репозитории</td>
+                <td>3.5, итог</td>
+              </tr>
+              <tr>
+                <td>Контекстные файлы в репозитории, которые развиваются</td>
+                <td>3.1, итог</td>
+              </tr>
+              <tr>
+                <td>Метрики из системных данных, а не опросы</td>
+                <td>итог</td>
+              </tr>
+              <tr>
+                <td>Порядок шагов Spec Kit</td>
+                <td>3.3</td>
+              </tr>
+              <tr>
+                <td>Общие правила — в constitution</td>
+                <td>3.3</td>
+              </tr>
+              <tr>
+                <td>Разбор <code>NEEDS CLARIFICATION</code></td>
+                <td>3.3</td>
+              </tr>
+              <tr>
+                <td><code>CLAUDE.local.md</code></td>
+                <td>3.1</td>
+              </tr>
+              <tr>
+                <td><code>/compact</code> и <code>/clear</code></td>
+                <td>3.5</td>
+              </tr>
+              <tr>
+                <td>
+                  Hook <code>PreToolUse</code> блокирует чтение
+                  <code>.env</code>
+                </td>
+                <td>3.5</td>
+              </tr>
+              <tr>
+                <td>Человек — navigator, агент — driver</td>
+                <td>3.4</td>
+              </tr>
+              <tr>
+                <td>Ping-pong: сначала тесты, потом код</td>
+                <td>3.4</td>
+              </tr>
+              <tr>
+                <td>Популярный стек против внутреннего фреймворка</td>
+                <td>3.1</td>
+              </tr>
+            </table>
+
+            <h3>Таблица соответствий инструментов</h3>
+            <table>
+              <tr>
+                <th></th>
+                <th>Claude Code (основной)</th>
+                <th>Copilot</th>
+                <th>Cursor</th>
+              </tr>
+              <tr>
+                <td>Правила проекта</td>
+                <td><code>CLAUDE.md</code></td>
+                <td>
+                  <code>.github/copilot-instructions.md</code>,
+                  <code>AGENTS.md</code>
+                </td>
+                <td><code>.cursor/rules</code>, <code>AGENTS.md</code></td>
+              </tr>
+              <tr>
+                <td>Личные правила</td>
+                <td>
+                  <code>CLAUDE.local.md</code> (один проект),
+                  <code>~/.claude/CLAUDE.md</code> (все проекты)
+                </td>
+                <td>пользовательские instructions</td>
+                <td>User Rules (все проекты)</td>
+              </tr>
+              <tr>
+                <td>Правила организации</td>
+                <td>managed <code>CLAUDE.md</code> (политика компании)</td>
+                <td>instructions организации</td>
+                <td>Team Rules</td>
+              </tr>
+              <tr>
+                <td>Режимы</td>
+                <td>
+                  обычный режим (агент), режим плана (<code>Shift+Tab</code>);
+                  автодополнения нет
+                </td>
+                <td>inline completion, Ask, Plan, Agent</td>
+                <td>Tab, Ask, Agent</td>
+              </tr>
+              <tr>
+                <td>Остановить и откатить</td>
+                <td>
+                  <code>Esc</code>, <code>/rewind</code> (двойной
+                  <code>Esc</code>)
+                </td>
+                <td>Stop, откат правок</td>
+                <td>Stop, checkpoints</td>
+              </tr>
+              <tr>
+                <td>Свои команды</td>
+                <td><code>.claude/commands/*.md</code></td>
+                <td><code>.github/prompts/*.prompt.md</code></td>
+                <td><code>.cursor/commands/*.md</code></td>
+              </tr>
+              <tr>
+                <td>Hooks</td>
+                <td><code>.claude/settings.json</code></td>
+                <td>—</td>
+                <td>hooks</td>
+              </tr>
+              <tr>
+                <td>MCP</td>
+                <td><code>claude mcp add</code>, <code>.mcp.json</code></td>
+                <td><code>.vscode/mcp.json</code></td>
+                <td><code>.cursor/mcp.json</code></td>
+              </tr>
+              <tr>
+                <td>Контекст</td>
+                <td>
+                  <code>/context</code>, <code>/compact</code>,
+                  <code>/clear</code>, режим плана
+                </td>
+                <td>список ссылок под ответом</td>
+                <td>индикатор контекста</td>
+              </tr>
+            </table>
+
+            <h3>Термины модуля</h3>
+            <table>
+              <tr>
+                <th>Термин</th>
+                <th>Что значит</th>
+              </tr>
+              <tr>
+                <td>Детерминированная проверка</td>
+                <td>
+                  Проверка, которая на одном и том же коде всегда даёт один
+                  результат: типы (<code>tsc</code>), линтер, тесты. В отличие
+                  от ответа агента.
+                </td>
+              </tr>
+              <tr>
+                <td>Ping-pong</td>
+                <td>
+                  Сначала агент пишет тесты на правило и они падают (ping),
+                  потом меняет код, пока тесты не пройдут (pong). Каждый шаг —
+                  отдельный коммит.
+                </td>
+              </tr>
+              <tr>
+                <td>Navigator и driver</td>
+                <td>
+                  Роли из парного программирования. Navigator (вы) задаёт
+                  направление, проверяет, останавливает и откатывает. Driver
+                  (агент) пишет код.
+                </td>
+              </tr>
+              <tr>
+                <td>Constitution</td>
+                <td>
+                  Файл Spec Kit с правилами, которые действуют для каждой фичи
+                  проекта: например, «тесты сначала», «без новых зависимостей».
+                </td>
+              </tr>
+              <tr>
+                <td><code>NEEDS CLARIFICATION</code></td>
+                <td>
+                  Метка, которую Spec Kit ставит в спецификации там, где
+                  требований не хватает. Это вопрос к вам.
+                </td>
+              </tr>
+              <tr>
+                <td>Hook</td>
+                <td>
+                  Ваш скрипт, который Claude Code запускает сам до вызова
+                  инструмента (<code>PreToolUse</code>) или после него
+                  (<code>PostToolUse</code>). Может заблокировать вызов. В
+                  отличие от правила в <code>CLAUDE.md</code>, его нельзя
+                  «забыть».
+                </td>
+              </tr>
+              <tr>
+                <td>MCP</td>
+                <td>
+                  Model Context Protocol — стандартный способ подключить агенту
+                  внешний сервис (трекер задач, базу, браузер) как набор
+                  инструментов.
+                </td>
+              </tr>
+              <tr>
+                <td><code>$ARGUMENTS</code></td>
+                <td>
+                  Место в тексте своей команды, куда подставляется всё, что вы
+                  написали после её имени:
+                  <code>/new-endpoint GET /books/:id</code>.
+                </td>
+              </tr>
+              <tr>
+                <td><code>/compact</code> и <code>/clear</code></td>
+                <td>
+                  <code>/compact</code> сжимает историю сессии в краткое
+                  изложение, и агент продолжает с тем, что узнал.
+                  <code>/clear</code> стирает историю полностью.
+                </td>
+              </tr>
+              <tr>
+                <td>AI Champion</td>
+                <td>
+                  Человек в команде, который собирает общие настройки агента
+                  (правила, команды, hooks) в репозитории и следит, чтобы ими
+                  пользовались все.
+                </td>
+              </tr>
+              <tr>
+                <td>Cycle time, базовая линия</td>
+                <td>
+                  Cycle time — время от начала работы над задачей до её
+                  закрытия. Базовая линия — значение метрики до внедрения AI, с
+                  которым сравнивают значение после.
+                </td>
+              </tr>
+            </table>
+          </article>
+
+          <!-- PROJECT -->
+          <article class="task theory" id="project">
+            <span class="chip">Учебный проект</span>
+            <h2>Shelf — личная книжная полка</h2>
+            <p>
+              Небольшой сервис: добавить книгу, отметить её прочитанной и
+              посмотреть статистику. Все задания модуля и итоговое выполняются в
+              нём, поэтому рабочий проект не нужен. Проект создаётся одним
+              скриптом.
+            </p>
+
+            <h3>Что заложено в проект</h3>
+            <table>
+              <tr>
+                <th>Что</th>
+                <th>Где</th>
+                <th>Для чего</th>
+              </tr>
+              <tr>
+                <td>Процент прочитанных книг считается неверно</td>
+                <td><code>src/stats.ts</code></td>
+                <td>3.2: тесты по бизнес-смыслу (B-1)</td>
+              </tr>
+              <tr>
+                <td>
+                  <code>GET /books/recent</code> всегда отвечает ошибкой 500
+                </td>
+                <td><code>src/storage.ts</code></td>
+                <td>3.2: исправление по промпту из трёх частей (B-2)</td>
+              </tr>
+              <tr>
+                <td>Пагинация пропускает первую страницу</td>
+                <td><code>src/storage.ts</code></td>
+                <td>необязательно, для самостоятельной работы в 3.4 (B-3)</td>
+              </tr>
+              <tr>
+                <td>
+                  <code>console.log</code> вместо логгера
+                  <code>src/log.ts</code>
+                </td>
+                <td>несколько файлов</td>
+                <td>3.4: правка в нескольких файлах (B-6)</td>
+              </tr>
+              <tr>
+                <td><code>.env</code> с фейковым секретом</td>
+                <td>корень проекта</td>
+                <td>3.5: hook, запрещающий чтение</td>
+              </tr>
+              <tr>
+                <td>Всего один тест</td>
+                <td><code>tests/api.test.ts</code></td>
+                <td>весь модуль</td>
+              </tr>
+              <tr>
+                <td><code>BACKLOG.md</code> с тикетами B-1…B-9</td>
+                <td>корень проекта</td>
+                <td>задания и итоговое задание</td>
+              </tr>
+              <tr>
+                <td>Журнал модуля с разделами по заданиям</td>
+                <td><code>docs/notes.md</code></td>
+                <td>
+                  промпты, ошибки агента и решения; по нему вы проверяете себя
+                </td>
+              </tr>
+            </table>
+
+            <h3>Перед началом</h3>
+            <p>
+              Установите и проверьте всё до задания 3.1, чтобы не
+              останавливаться посреди работы.
+            </p>
+            <table>
+              <tr>
+                <th>Что</th>
+                <th>Проверка</th>
+                <th>Где понадобится</th>
+              </tr>
+              <tr>
+                <td>Node.js 20+ и npm</td>
+                <td><code>node -v</code> — v20 или выше</td>
+                <td>весь модуль</td>
+              </tr>
+              <tr>
+                <td>git</td>
+                <td>
+                  <code>git --version</code>; имя и почта заданы:
+                  <code>git config user.name</code>
+                </td>
+                <td>весь модуль</td>
+              </tr>
+              <tr>
+                <td>Claude Code, вход выполнен</td>
+                <td>
+                  <code>claude --version</code>, затем <code>claude</code> в
+                  любой папке отвечает на «привет»
+                </td>
+                <td>весь модуль</td>
+              </tr>
+              <tr>
+                <td><code>uv</code> (для Spec Kit)</td>
+                <td>
+                  <code>uv --version</code>; установка:
+                  <code>brew install uv</code> или <code>pip install uv</code>
+                </td>
+                <td>3.3, итоговое</td>
+              </tr>
+              <tr>
+                <td>Аккаунт GitHub, можно личный</td>
+                <td>вы можете создать репозиторий, приватный или публичный</td>
+                <td>3.5, итоговое</td>
+              </tr>
+              <tr>
+                <td>GitHub personal access token</td>
+                <td>создаётся в 3.5, права описаны там</td>
+                <td>3.5 (MCP)</td>
+              </tr>
+              <tr>
+                <td><code>gh</code> (не нужен)</td>
+                <td>—</td>
+                <td>всё делается через веб-интерфейс GitHub и обычный git</td>
+              </tr>
+            </table>
+
+            <h3>Запуск</h3>
+            <p>
+              Создайте пустую рабочую папку и сохраните в неё скрипт из блока
+              «Скрипт make-project.mjs» ниже как файл
+              <code>make-project.mjs</code>. Затем в этой папке:
+            </p>
+            <details>
+              <summary>Скрипт make-project.mjs</summary>
+              <div class="body">
+                <pre><code>// make-project.mjs — создаёт учебный проект shelf для модуля 3
+import { mkdirSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+
+const packageJson = {
+  name: "shelf",
+  private: true,
+  type: "module",
+  scripts: {
+    dev: "tsx watch src/server.ts",
+    test: "vitest run",
+    lint: "eslint .",
+    typecheck: "tsc --noEmit",
+    check: "tsc --noEmit &amp;&amp; eslint . &amp;&amp; vitest run",
+  },
+  dependencies: {
+    express: "^5.1.0",
+  },
+  devDependencies: {
+    "@eslint/js": "^9.20.0",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.0",
+    "@types/supertest": "^6.0.2",
+    eslint: "^9.20.0",
+    supertest: "^7.0.0",
+    tsx: "^4.19.0",
+    typescript: "^5.7.0",
+    "typescript-eslint": "^8.24.0",
+    vitest: "^3.0.0",
+  },
+};
+
+const FILES = {
+  "src/log.ts": `type Level = "info" | "warn" | "error";
+
+export type Logger = Record&lt;Level, (msg: string, extra?: Record&lt;string, unknown&gt;) =&gt; void&gt;;
+
+export function getLogger(name: string): Logger {
+  const write = (level: Level) =&gt; (msg: string, extra: Record&lt;string, unknown&gt; = {}) =&gt; {
+    process.stdout.write(JSON.stringify({ level, logger: name, msg, ...extra }) + "\\n");
+  };
+  return { info: write("info"), warn: write("warn"), error: write("error") };
+}
+`,
+  "src/stats.ts": `/** Доля прочитанных книг в процентах, одна цифра после запятой. */
+export function percent(read: number, total: number): number {
+  if (total === 0) {
+    return 0;
+  }
+  return Math.round(((read * total) / 100) * 10) / 10;
+}
+`,
+  "src/storage.ts": `export interface Book {
+  id: number;
+  title: string;
+  author: string;
+  read: boolean;
+}
+
+export class BookNotFoundError extends Error {}
+
+let nextId = 1;
+export const books = new Map&lt;number, Book&gt;();
+
+export function addBook(title: string, author: string): Book {
+  const book: Book = { id: nextId++, title, author, read: false };
+  books.set(book.id, book);
+  console.log("book added", book.id);
+  return book;
+}
+
+export function listBooks(): Book[] {
+  return [...books.values()];
+}
+
+export function getBook(id: number): Book {
+  const book = books.get(id);
+  if (!book) {
+    throw new BookNotFoundError(String(id));
+  }
+  return book;
+}
+
+export function recent(n = 3): Pick&lt;Book, "id" | "title"&gt;[] {
+  const all = listBooks();
+  return Array.from({ length: n }, (_, i) =&gt; {
+    const book = all[all.length - i];
+    return { id: book.id, title: book.title };
+  });
+}
+
+export function paginate&lt;T&gt;(items: T[], page: number, perPage: number): T[] {
+  // страницы нумеруются с 1
+  const start = page * perPage;
+  return items.slice(start, start + perPage);
+}
+
+export function markRead(id: number): Book {
+  const book = getBook(id);
+  book.read = true;
+  return book;
+}
+`,
+  "src/app.ts": `import express from "express";
+
+import { percent } from "./stats";
+import * as storage from "./storage";
+
+export const app = express();
+app.use(express.json());
+
+interface NewBook {
+  title: string;
+  author: string;
+}
+
+app.post("/books", (req, res) =&gt; {
+  const body = req.body as NewBook;
+  res.json(storage.addBook(body.title, body.author));
+});
+
+app.get("/books", (req, res) =&gt; {
+  const page = Number(req.query.page ?? 1);
+  const perPage = Number(req.query.per_page ?? 10);
+  res.json(storage.paginate(storage.listBooks(), page, perPage));
+});
+
+app.get("/books/recent", (_req, res) =&gt; {
+  res.json(storage.recent());
+});
+
+app.post("/books/:id/read", (req, res) =&gt; {
+  const id = Number(req.params.id);
+  try {
+    res.json(storage.markRead(id));
+  } catch (err) {
+    if (err instanceof storage.BookNotFoundError) {
+      console.log("book not found", id);
+      res.status(404).json({ detail: "Book not found" });
+      return;
+    }
+    throw err;
+  }
+});
+
+app.get("/stats", (_req, res) =&gt; {
+  const all = storage.listBooks();
+  const read = all.filter((b) =&gt; b.read).length;
+  res.json({ total: all.length, read, percent: percent(read, all.length) });
+});
+`,
+  "src/server.ts": `import { app } from "./app";
+
+const port = Number(process.env.PORT ?? 3000);
+app.listen(port, () =&gt; {
+  console.log("Shelf listening on port", port);
+});
+`,
+  "tests/api.test.ts": `import request from "supertest";
+import { describe, expect, it } from "vitest";
+
+import { app } from "../src/app";
+
+describe("POST /books", () => {
+  it("creates a book", async () => {
+    const res = await request(app).post("/books").send({ title: "Дюна", author: "Фрэнк Герберт" });
+    expect(res.status).toBe(200);
+    expect(res.body.title).toBe("Дюна");
+  });
+});
+`,
+  "package.json": JSON.stringify(packageJson, null, 2) + "\n",
+  "tsconfig.json": `{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "types": ["node"]
+  },
+  "include": ["src", "tests"]
+}
+`,
+  "eslint.config.js": `import js from "@eslint/js";
+import tseslint from "typescript-eslint";
+
+export default tseslint.config(
+  { ignores: ["node_modules/", ".claude/", ".specify/"] },
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+);
+`,
+  ".env": "SECRET_KEY=dev-only-not-a-real-secret\n",
+  ".gitignore": "node_modules/\n.env\n.tmp/\nCLAUDE.local.md\n.claude/settings.local.json\n",
+  "README.md": `# Shelf
+
+Личная книжная полка для модуля 3.
+
+    npm install
+    npm run dev     # сервер на http://localhost:3000
+    npm run check   # tsc --noEmit, eslint, vitest
+`,
+  "docs/notes.md": `# Журнал модуля 3
+
+Промпты, ошибки агента и решения по заданиям. По этому файлу и истории коммитов вы проверяете себя по критериям.
+В каждом разделе отвечайте на те пункты критериев готовности задания, которые требуют записи в журнал.
+
+## 3.1 Правила
+
+- Чем агент логировал до CLAUDE.md:
+- Чем после и почему:
+- Какой стек выбрали и почему:
+
+## 3.2 Отладка и тесты
+
+- B-1: что проверяли тесты по одному коду:
+- B-2: промпт из трёх частей:
+- Галлюцинация: ошибка tsc, ссылка на документацию, промпт с обратной связью:
+
+## 3.3 Spec Kit
+
+- Порядок команд Spec Kit и какой файл создал каждый шаг:
+- Какие NEEDS CLARIFICATION были и что вы ответили:
+
+## 3.4 Агентный режим
+
+- Что делали в режиме плана, что в агентном:
+- Когда остановили или откатили агента и почему:
+
+## 3.5 Команды, hooks, MCP
+
+- Какой инструмент MCP вызвал агент, чтобы прочитать Issue B-8:
+- Что агент помнил после /compact и после /clear:
+
+## Итоговое задание
+
+Заметка о решениях — отдельный файл docs/B-7-decisions.md.
+
+- Где сработал hook, что сказал /self-review:
+`,
+  "BACKLOG.md": `# Бэклог
+
+- B-1 (баг): /stats показывает неверный процент прочитанных книг.
+- B-2 (баг): GET /books/recent всегда отвечает 500.
+- B-3 (баг): GET /books?page=1 не показывает первые книги.
+- B-4 (фича): Экспорт библиотеки: GET /books/export?format=json или csv.
+- B-5 (фича): Валидация названия книги: от 1 до 120 символов, пробелы по краям обрезаются.
+- B-6 (долг): В коде console.log вместо логгера src/log.ts.
+- B-7 (эпик): Пользователи забывают вернуть книги в библиотеку. Нужно напоминать о сроках.
+- B-8 (фича): GET /books/:id — получить книгу по id, 404, если её нет.
+- B-9 (фича): DELETE /books/:id — удалить книгу, 404, если её нет.
+`,
+};
+
+for (const [path, content] of Object.entries(FILES)) {
+  const file = join("shelf", path);
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, content, "utf8");
+}
+console.log("Готово: проект в папке shelf/");</code></pre>
+              </div>
+            </details>
+            <div class="note">
+              Скрипт открыт целиком, но читать его до заданий не нужно: баги
+              полезнее искать в проекте с агентом, как в реальной работе.
+            </div>
+            <pre><code>node make-project.mjs
+cd shelf
+npm install
+git init -b main &amp;&amp; git add -A &amp;&amp; git commit -m "chore: initial project"
+npm run check                    # tsc --noEmit, eslint, vitest</code></pre>
+            <p>
+              Должно получиться: <code>npm run check</code> зелёный, 1 тест
+              проходит. Баги в проекте есть, но единственный тест их не
+              проверяет — это нормально. <code>-b main</code> нужен, чтобы
+              основная ветка называлась <code>main</code>: на неё ссылаются
+              команды в 3.4 и итоговом задании.
+            </p>
+
+            <h3>Репозиторий на GitHub</h3>
+            <p>
+              Сделайте это сразу: в 3.5 нужны Issues, а в итоговом задании — PR.
+              На GitHub создайте репозиторий <code>shelf</code> <b>без</b> README
+              и <code>.gitignore</code> — пустой, чтобы ваша история встала на
+              него без конфликтов. Приватный или публичный — на ваш выбор:
+              Issues, PR и GitHub MCP работают одинаково. Приватный просто
+              аккуратнее (проект учебный, с намеренными багами и вашими
+              заметками), но ничего в модуле от этого не зависит, а видимость
+              потом меняется в Settings. Затем из папки <code>shelf</code>:
+            </p>
+            <pre><code>git remote add origin https://github.com/&lt;ваш-логин&gt;/shelf.git
+git push -u origin main</code></pre>
+            <p>
+              Проверка: на странице репозитория видна ветка <code>main</code> и
+              ваш первый коммит. Если репозиторий уже создан и назван иначе —
+              ничего не меняйте, дальше в модуле работайте с ним.
+            </p>
+
+            <h3>Как устроен git в модуле</h3>
+            <table>
+              <tr>
+                <th>Где</th>
+                <th>Ветка</th>
+                <th>Как попадает в <code>main</code></th>
+              </tr>
+              <tr>
+                <td>3.1, 3.2</td>
+                <td>сразу <code>main</code></td>
+                <td>обычные коммиты, ветка не нужна</td>
+              </tr>
+              <tr>
+                <td>3.3</td>
+                <td>
+                  <code>git switch -c 001-…</code> по имени каталога фичи,
+                  который создал шаг specify
+                </td>
+                <td>
+                  коммиты в этой ветке, затем локально:
+                  <code
+                    >git switch main &amp;&amp; git merge &lt;имя
+                    ветки&gt;</code
+                  >
+                </td>
+              </tr>
+              <tr>
+                <td>3.4</td>
+                <td><code>git switch -c task-3.4</code></td>
+                <td>
+                  локально:
+                  <code>git switch main &amp;&amp; git merge task-3.4</code>
+                </td>
+              </tr>
+              <tr>
+                <td>3.5</td>
+                <td><code>git switch -c task-3.5</code></td>
+                <td>
+                  локально:
+                  <code>git switch main &amp;&amp; git merge task-3.5</code>,
+                  затем <code>git push origin main</code>
+                </td>
+              </tr>
+              <tr>
+                <td>Итоговое</td>
+                <td>
+                  <code>git switch -c 002-…</code> по имени каталога фичи,
+                  который создал шаг specify
+                </td>
+                <td>
+                  через PR на GitHub, merge в интерфейсе GitHub, затем
+                  <code>git switch main &amp;&amp; git pull</code>
+                </td>
+              </tr>
+            </table>
+            <p>
+              Где в таблице написано <code>&lt;имя ветки&gt;</code> или
+              <code>001-…</code>, подставьте настоящее имя ветки из
+              <code>git branch</code>.
+            </p>
+            <div class="note">
+              <b>Push и merge делаете вы, а не агент</b> — это запрет из
+              <code>CLAUDE.md</code>. Агент пишет код и коммитит, вы читаете
+              diff, сливаете ветки и делаете push, а в итоговом задании
+              открываете PR. Новую ветку всегда начинайте от свежего
+              <code>main</code>: <code>git switch main</code>, затем
+              <code>git switch -c …</code>.
+            </div>
+
+          </article>
+
+          <!-- TASK 3.1 -->
           <article class="task" id="t1">
             <span class="chip">Задание 3.1</span>
-            <h2>GitHub Copilot в работе</h2>
-            <div class="goal">
-              <strong>Что делаем:</strong> используем автодополнение и chat для
-              первого эндпойнта. <strong>Зачем:</strong> понять два режима
-              Copilot — подсказка по ходу набора и диалог по задаче — и где
-              каждый уместен.
+            <h2>Правила агента: проект и личные</h2>
+            <div class="meta">
+              <span
+                ><b>Курсы:</b> Claude Code in Action; GitHub Copilot
+                Capabilities; Cursor Basics 101; AI-Native SDLC</span
+              >
+              <span><b>Время:</b> ~50 мин</span>
+              <span
+                ><b>Ветка:</b> <code>main</code>, отдельная не нужна</span
+              >
             </div>
-
-            <h3><span class="step-label">Шаг 1</span>Проект и зависимости</h3>
-            <pre><code>mkdir knowledgebot
-cd knowledgebot
-python -m venv .venv
-.venv\Scripts\activate
-pip install fastapi uvicorn pytest httpx</code></pre>
-
-            <h3>
-              <span class="step-label">Шаг 2</span>Автодополнение по комментарию
-            </h3>
+            <h3>Что делаем</h3>
             <p>
-              Создайте <code>app/main.py</code>, напишите только комментарий и
-              дайте Copilot дополнить тело:
+              Настраиваем постоянные правила для агента на трёх уровнях: правила
+              проекта для команды, личное правило для этого проекта и личное
+              правило для всех ваших проектов.
             </p>
-            <pre><code># FastAPI app with POST /ask that takes {"question": str}
-# and returns {"answer": str, "sources": list[str]}
-</code></pre>
-            <div class="note">
-              Copilot предложит каркас. Не принимайте вслепую — читайте
-              предложение перед Tab.
-            </div>
 
-            <h3>
-              <span class="step-label">Шаг 3</span>Эталон, который должен
-              получиться
-            </h3>
-            <pre><code>from fastapi import FastAPI
-from pydantic import BaseModel
-
-app = FastAPI()
-
-class AskRequest(BaseModel):
-    question: str
-
-class AskResponse(BaseModel):
-    answer: str
-    sources: list[str]
-
-@app.post("/ask", response_model=AskResponse)
-def ask(req: AskRequest) -> AskResponse:
-    return AskResponse(answer=f"Заглушка: {req.question}", sources=[])</code></pre>
-
-            <h3><span class="step-label">Шаг 4</span>Copilot Chat для теста</h3>
+            <h3>Зачем</h3>
             <p>
-              В чате Copilot попросите: «Напиши pytest для POST /ask с
-              TestClient». Ожидаемый результат:
+              Без правил агент каждый раз пишет «типовой» код. Правила проекта
+              лежат в репозитории и видны всей команде. Личные правила в
+              репозиторий не попадают. Агент знает Express и TypeScript по
+              открытому коду, а ваши конвенции, например логгер
+              <code>src/log.ts</code>, нужно описать.
             </p>
-            <pre><code># tests/test_ask.py
-from fastapi.testclient import TestClient
-from app.main import app
 
-client = TestClient(app)
+            <h3>Условие</h3>
+            <ol class="cond">
+              <li>
+                <b>До правил.</b> Откройте Claude Code в папке
+                <code>shelf</code> и попросите: «добавь логирование в обработчик
+                <code>POST /books/:id/read</code>». Запомните, чем агент
+                логирует на самом деле, и запишите фактический результат, а не
+                ожидаемый. Вариантов два, и оба нормальны: агент может взять
+                <code>console.log</code> — так логируют
+                <code>src/server.ts</code> и <code>src/storage.ts</code>, — а
+                может сам подхватить <code>getLogger()</code> из
+                <code>src/log.ts</code>, потому что именно так устроен соседний
+                код в <code>src/app.ts</code>. Второй случай — это уже
+                корректное поведение без всяких правил. Затем откатите правку:
+                <code>git restore .</code>, новые файлы удалите вручную. <code>git status</code> должен показать «nothing to
+                commit».
+              </li>
+              <li>
+                <b>CLAUDE.md — правила команды.</b> Создайте
+                <code>CLAUDE.md</code> в корне <code>shelf/</code>, рядом с
+                <code>package.json</code>. В нём четыре раздела: Стек, Команды,
+                Конвенции, Запреты. Обязательно запишите: логирование только
+                через <code>getLogger()</code> из <code>src/log.ts</code>;
+                ошибки API — в виде <code>{ detail }</code> с кодом статуса;
+                тесты в <code>tests/</code>. В запретах: не менять файлы вне
+                задачи, не добавлять зависимости без запроса, не делать push и
+                merge. Закоммитьте:
+                <code
+                  >git add CLAUDE.md &amp;&amp; git commit -m "chore: add
+                  CLAUDE.md"</code
+                >.
+              </li>
+              <li>
+                <b>CLAUDE.local.md — личное для этого проекта.</b> Создайте файл
+                в той же папке, например с вашей командой запуска тестов. Он не
+                должен попасть в git: проверьте <code>git status</code>.
+              </li>
+              <li>
+                <b>~/.claude/CLAUDE.md — личное для всех проектов.</b> Допишите
+                в конец файла (если его нет, создайте): «Отвечай кратко. Пиши
+                по-британски (colour, behaviour). Заканчивай ответ строкой
+                <code>— ok</code>». Это правило видно сразу, его легко
+                проверить.
+              </li>
+              <li>
+                <b><code>docs/notes.md</code>.</b> В раздел 3.1 в 3–4 строках
+                напишите: что из правил где лежит и почему. Отдельно
+                напишите, почему выбран стек Express и TypeScript: что агент
+                знает о нём из открытого кода.
+              </li>
+              <li>
+                <b>После правил.</b> Повторите шаг 1 в новой сессии. Запишите в
+                <code>docs/notes.md</code>, чем агент логирует теперь. Затем откатите правку:
+                <code>git restore src/</code>. Логирование целиком сделаете в
+                3.4 (B-6).
+              </li>
+              <li>
+                <b>Необязательно, если используете Copilot или Cursor:</b> те же
+                правила проекта положите в
+                <code>.github/copilot-instructions.md</code> или
+                <code>.cursor/rules</code>, как требует каждый инструмент.
+              </li>
+            </ol>
 
-def test_ask_ok():
-    r = client.post("/ask", json={"question": "привет"})
-    assert r.status_code == 200
-    assert "answer" in r.json()</code></pre>
+            <details>
+              <summary>В Copilot и Cursor (необязательно)</summary>
+              <div class="body">
+                <p>
+                  Для тех, кто работает в Copilot или Cursor. Остальные могут
+                  пропустить этот блок.
+                </p>
+                <div class="note">
+                  <b>Правила проекта.</b>
+                  <ul class="cond">
+                    <li>
+                      <b>Аналог:</b> в Copilot —
+                      <code>.github/copilot-instructions.md</code>, в Cursor —
+                      <code>.cursor/rules/*.mdc</code>. Оба читают и
+                      <code>AGENTS.md</code>. Файл попадает в контекст каждого
+                      запроса сам.
+                    </li>
+                    <li>
+                      <b>Проверка в Copilot:</b> спросите в режиме Ask: «каким
+                      логгером пользоваться в этом проекте?» В ответе должен
+                      быть <code>src/log.ts</code>, а в списке ссылок — файл
+                      правил.
+                    </li>
+                  </ul>
+                </div>
+                <div class="note">
+                  <b>Личные правила для всех проектов.</b>
+                  <ul class="cond">
+                    <li>
+                      <b>Аналог:</b> в Cursor — User Rules (Cursor Settings →
+                      Rules), действуют в каждом проекте. В Copilot —
+                      пользовательские instructions в настройках VS Code.
+                    </li>
+                    <li>
+                      <b>С чем путают:</b>
+                      <code>.cursor/rules/*.mdc</code> лежит в репозитории и
+                      действует только на этот проект для всей команды.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </details>
 
-            <h3><span class="step-label">Шаг 5</span>Запуск</h3>
-            <pre><code>uvicorn app.main:app --reload
-# в другом терминале:
-pytest -q</code></pre>
+            <h3>Критерии готовности</h3>
+            <ul class="criteria">
+              <li>
+                <code>CLAUDE.md</code> короче 60 строк и содержит четыре
+                раздела: стек, команды, конвенции, запреты. В конвенциях есть
+                <code>getLogger()</code> и <code>{ detail }</code>.
+              </li>
+              <li>
+                <code>git ls-files CLAUDE.local.md</code> ничего не выводит, а
+                <code>git status</code> не показывает этот файл.
+              </li>
+              <li>
+                Личное правило работает в другой папке:
+                <code>cd /tmp &amp;&amp; claude</code>, любой вопрос — короткий
+                ответ с британским написанием и строкой <code>— ok</code> в
+                конце.
+              </li>
+              <li>
+                В новой сессии агент использует <code>getLogger</code>, а не
+                <code>console.log</code>. В <code>docs/notes.md</code> записано,
+                что было до и после CLAUDE.md — в том числе если «до» агент уже
+                сам выбрал <code>getLogger</code> и правило лишь закрепило
+                конвенцию.
+              </li>
+              <li>
+                В <code>docs/notes.md</code> раздел 3.1 заполнен: что где лежит,
+                почему, и обоснован выбор стека.
+              </li>
+              <li>
+                К итогу модуля
+                <code>git log --oneline -- CLAUDE.md</code> показывает не меньше
+                трёх коммитов: создание и две правки.
+              </li>
+            </ul>
+
+            <details>
+              <summary>Подсказки</summary>
+              <div class="body">
+                <ul class="cond">
+                  <li>
+                    <code>/init</code> создаёт черновик <code>CLAUDE.md</code>.
+                    Сократите его: агент читает файл в каждой сессии.
+                  </li>
+                  <li>
+                    Три уровня: <code>CLAUDE.md</code> — команда и проект,
+                    <code>CLAUDE.local.md</code> — вы и проект,
+                    <code>~/.claude/CLAUDE.md</code> — вы и все проекты.
+                  </li>
+                  <li>
+                    Личное правило проверяйте на вопросе, где ответ заметно
+                    меняется: строка в конце, британское написание, короткий
+                    ответ.
+                  </li>
+                </ul>
+              </div>
+            </details>
+
+            <details class="solution">
+              <summary>Показать пример решения</summary>
+              <div class="body">
+                <p class="warn">Откройте после собственной попытки.</p>
+                <pre><code># CLAUDE.md
+## Стек
+- TypeScript (strict), Node.js 20+, Express 5, Vitest + supertest, ESLint.
+- Хранилище — в памяти (src/storage.ts). Сборки нет, запуск через tsx.
+
+## Команды
+- Запуск: npm run dev
+- Проверка: npm run check (tsc --noEmit, eslint, vitest). Запускай после каждой правки.
+
+## Конвенции
+- Логирование только через getLogger() из src/log.ts, никаких console.log.
+- Ошибки API — { detail } с кодом статуса (404, 422).
+- Без any и без non-null assertion (!).
+- Тесты — в tests/, файл &lt;модуль&gt;.test.ts.
+- Коммиты: test: / feat: / fix: / chore: и номер тикета, например "feat: book title (B-5)".
+
+## Запреты
+- Не меняй файлы, которые не относятся к задаче.
+- Не добавляй зависимости без моего согласия.
+- Не читай и не выводи .env.
+- Не делай git push и merge: это решает человек после ревью.</code></pre>
+                <pre><code># CLAUDE.local.md — не коммитится (есть в .gitignore)
+- Тесты запускай так: npx vitest run --bail 1</code></pre>
+                <pre><code># ~/.claude/CLAUDE.md — для всех проектов на этом ноутбуке
+- Отвечай кратко. Пиши по-британски (colour, behaviour).
+- Заканчивай каждый ответ строкой "— ok".   # для проверки, потом можно убрать</code></pre>
+                <pre><code># docs/notes.md, раздел 3.1 (пример)
+До CLAUDE.md агент добавил console.log("book read", id): про src/log.ts он не знал.
+После правила — getLogger("app"). (Другой нормальный исход: агент сразу взял getLogger,
+подсмотрев его в src/app.ts, и правило только зафиксировало это для новых файлов.)
+Правила команды — в CLAUDE.md, личная команда тестов —
+в CLAUDE.local.md, правило для всех проектов — в ~/.claude/CLAUDE.md.
+Стек Express + TypeScript: агент знает его по открытому коду, поэтому в CLAUDE.md
+описаны только свои конвенции (логгер, формат ошибок).</code></pre>
+              </div>
+            </details>
+
             <div class="note">
-              <b>Вывод:</b> автодополнение ускоряет набор, chat решает задачу
-              целиком. Ответственность за корректность — на вас.
+              <b>Вывод:</b> правила в репозитории делают поведение агента
+              одинаковым для всей команды. Личное остаётся личным. Популярный
+              стек выбирают потому, что всё, чего нет в открытом коде, агенту
+              приходится объяснять.
             </div>
           </article>
 
-          <!-- 3.2 -->
+          <!-- TASK 3.2 -->
           <article class="task" id="t2">
             <span class="chip">Задание 3.2</span>
-            <h2>Claude Code и память проекта (CLAUDE.md)</h2>
-            <div class="goal">
-              <strong>Что делаем:</strong> даём агенту постоянные правила через
-              <code>CLAUDE.md</code> и работаем в режиме плана.
-              <strong>Зачем:</strong>
-              чтобы агент соблюдал конвенции без повторов и не менял лишнего.
+            <h2>Отладка, тесты и декомпозиция</h2>
+            <div class="meta">
+              <span
+                ><b>Курсы:</b> AI-Assisted Engineering; Cursor Basics 101</span
+              >
+              <span><b>Время:</b> ~60 мин</span>
+              <span
+                ><b>Ветка:</b> <code>main</code>, отдельная не нужна</span
+              >
             </div>
+            <h3>Что делаем</h3>
+            <p>
+              Пишем промпты для тестов, для исправления ошибки, для разбора
+              ошибки компилятора и для разбиения задачи на части.
+            </p>
 
-            <h3><span class="step-label">Шаг 1</span>Создаём CLAUDE.md</h3>
-            <pre><code># KnowledgeBot
+            <h3>Зачем</h3>
+            <p>
+              Если дать агенту только код, он напишет тесты, которые
+              подтверждают баг. Если сказать только «почини», исправление будет
+              наугад. Если агент придумал функцию, которой нет в библиотеке,
+              поймать это должна проверка, а не догадка.
+            </p>
 
-## Стек
-- Python 3.12, FastAPI, pytest
+            <h3>Условие</h3>
+            <ol class="cond">
+              <li>
+                <b>B-1: тесты только по коду.</b> Откройте Claude Code и
+                попросите: «Напиши тесты для <code>percent()</code> в
+                <code>src/stats.ts</code>, код не меняй». Запустите
+                <code>npm test</code>. Исходов два, записывайте свой:
+                <ul>
+                  <li>
+                    <b>Зелёные.</b> Агент вывел ожидания из самой формулы и
+                    зафиксировал баг как норму: 5 из 10 даёт 0.5, а не 50. Тесты
+                    сравнивают код с самим собой.
+                  </li>
+                  <li>
+                    <b>Агент сам нашёл баг.</b> Современные модели часто видят
+                    расхождение кода и назначения — здесь хватает имени функции,
+                    слова «проценты» в комментарии и умножения вместо деления.
+                    Тогда он предложит тесты по смыслу, которые <b>падают</b>, и
+                    это правильное поведение, а не ошибка задания.
+                  </li>
+                </ul>
+                Удалите тесты и запишите в <code>docs/notes.md</code> свой
+                случай: почему зелёные
+                тесты ничего не доказывают — или по каким признакам агент
+                заподозрил баг. Вывод один: тесты из кода проверяют лишь «код
+                работает так, как написан». Источник истины — ожидаемое
+                поведение, и задать его должны вы: на функции сложнее
+                <code>percent()</code> подсказок в коде не будет.
+              </li>
+              <li>
+                <b>B-1: тесты по смыслу.</b> Повторите просьбу, добавив
+                назначение функции и примеры: «<code>percent(read, total)</code>
+                — доля прочитанных книг в процентах. Примеры: 5 из 10 — 50; 1 из
+                3 — 33.3; 0 книг — 0; 10 из 10 — 100. Тесты проверяют это
+                поведение, а не текущий код». Файл:
+                <code>tests/stats.test.ts</code>. Запустите тесты: они должны
+                упасть.
+              </li>
+              <li>
+                <b>B-1: исправление.</b> Попросите исправить
+                <code>percent()</code> так, чтобы тесты прошли, тесты при этом
+                не менять. Закоммитьте тесты и исправление двумя коммитами.
+              </li>
+              <li>
+                <b>B-2: промпт из трёх частей.</b> Воспроизведите ошибку. В
+                первом терминале: <code>npm run dev</code>. Во втором:
+                <code
+                  >curl -X POST localhost:3000/books -H "Content-Type:
+                  application/json" -d
+                  '{"title":"Дюна","author":"Герберт"}'</code
+                >, затем <code>curl localhost:3000/books/recent</code>. В первом
+                терминале появится <code>TypeError</code> и стек. Промпт должен
+                содержать три части: точное сообщение ошибки, функцию
+                <code>recent()</code> из <code>src/storage.ts</code>, ожидаемое
+                поведение: вернуть до трёх последних книг, новые первыми; при
+                пустом списке — пустой массив. Попросите исправить и добавить
+                тесты на 0, 1 и 5 книг. Промпт запишите в
+                <code>docs/notes.md</code>.
+              </li>
+              <li>
+                <b>Галлюцинация.</b> Создайте
+                <code>src/validation-draft.ts</code> с кодом ниже и представьте,
+                что его написал агент по просьбе «проверь тело запроса».
+                Запустите <code>npm run check</code>: <code>tsc</code> выдаст
+                ошибку <code>TS2305</code>. Найдите в документации Express, есть
+                ли такой экспорт. Затем передайте агенту ошибку и то, что нашли
+                в документации, и попросите решение без новых зависимостей, код
+                пока не меняя. Удалите файл: <code>git status</code> не должен
+                показывать изменений в <code>src/</code>.
+                <pre><code>import { validateBody } from "express";
 
-## Правила для агента
-- Меняй только файлы, которые я явно назвал.
-- Не рефактори работающий код без запроса.
-- Всегда добавляй тесты для нового кода.
-- Используй type hints.
-- Перед коммитом запускай pytest.</code></pre>
+export function validateTitle(input: unknown): string {
+  return validateBody(input, { title: "string" });
+}</code></pre>
+              </li>
+              <li>
+                <b>B-4: декомпозиция.</b> Кода здесь нет — только план. Возьмите
+                тикет B-4 из бэклога («Экспорт библиотеки:
+                <code>GET /books/export?format=json</code> или
+                <code>csv</code>») и напишите в <code>docs/B-4.md</code>
+                нумерованный список из 4–6 подзадач:
+                <ul>
+                  <li>
+                    <b>Каждая подзадача полезна сама по себе</b> — её можно
+                    закоммитить отдельно, и проект останется рабочим. «Функция
+                    <code>exportBooks()</code> для JSON» — годится, «половина
+                    эндпойнта» — нет.
+                  </li>
+                  <li>
+                    <b>Иерархия — отступами:</b> пункты 2.1 и 2.2 — части
+                    пункта 2, а не отдельные задачи.
+                  </li>
+                  <li>
+                    <b>Зависимости — припиской</b>
+                    <code>— зависит от 2</code> в конце строки. Нет приписки —
+                    значит, можно брать первой.
+                  </li>
+                </ul>
+                В конце — один <b>открытый вопрос к владельцу продукта</b>: то,
+                что не вам решать. Например: экспортировать все книги или только
+                прочитанные? Этот файл и ответ на вопрос понадобятся в 3.3 как
+                вход для Spec Kit. Агента звать можно, но план прочитайте сами:
+                типичные огрехи — подзадачи вида «отрефакторить storage»,
+                зависимости по кругу и забытые тесты.
+              </li>
+            </ol>
 
-            <h3>
-              <span class="step-label">Шаг 2</span>Первый коммит — правила, не
-              код
-            </h3>
-            <pre><code>git init
-git add CLAUDE.md
-git commit -m "chore: add CLAUDE.md"</code></pre>
+            <h3>Критерии готовности</h3>
+            <ul class="criteria">
+              <li>
+                Тесты B-1 <b>падают</b> на исходном коде и проходят после
+                исправления. Тесты между этими состояниями не менялись.
+              </li>
+              <li>
+                Промпт для B-2 из трёх частей записан в
+                <code>docs/notes.md</code>.
+              </li>
+              <li>
+                В <code>docs/notes.md</code>: ошибка <code>tsc</code> из шага
+                «Галлюцинация», ссылка на документацию и ваш промпт с обратной
+                связью.
+              </li>
+              <li>
+                В <code>docs/B-4.md</code> 4–6 подзадач, и про каждую вы можете
+                сказать, что она даёт сама по себе. Есть хотя бы один вложенный
+                пункт, хотя бы одна приписка «зависит от» и один открытый
+                вопрос к владельцу продукта.
+              </li>
+            </ul>
 
-            <h3><span class="step-label">Шаг 3</span>Режим плана</h3>
-            <pre><code>Промпт агенту:
-"Plan: предложи структуру проекта KnowledgeBot по спецификации.
-Файлы пока не создавай — покажи план."</code></pre>
+            <details>
+              <summary>Подсказки</summary>
+              <div class="body">
+                <ul class="cond">
+                  <li>
+                    Сначала добейтесь, чтобы тест упал, и только потом
+                    исправляйте код. Тест, который не падал ни разу, ничего не
+                    доказывает.
+                  </li>
+                  <li>
+                    Почему <code>tsc</code> не заметил ошибку в
+                    <code>recent()</code>? Посмотрите опцию
+                    <code>noUncheckedIndexedAccess</code> в
+                    <code>tsconfig.json</code>: это ещё одна детерминированная
+                    проверка.
+                  </li>
+                  <li>
+                    Стек берите из вывода <code>npm run dev</code>, а не из
+                    тестов: в тестах Express стек не печатает.
+                  </li>
+                  <li>
+                    Обратная связь агенту — это факт: точное сообщение
+                    компилятора и то, что вы нашли в документации, а не
+                    «попробуй ещё».
+                  </li>
+                </ul>
+              </div>
+            </details>
+
+            <details class="solution">
+              <summary>Показать пример решения</summary>
+              <div class="body">
+                <p class="warn">Откройте после собственной попытки.</p>
+                <pre><code>Промпт для тестов B-1:
+Напиши Vitest-тесты для percent() в src/stats.ts, файл tests/stats.test.ts.
+Назначение: percent(read, total) — доля прочитанных книг в процентах.
+Примеры: 5 из 10 — 50; 1 из 3 — 33.3; 0 книг — 0; 10 из 10 — 100.
+Тесты проверяют это поведение, а не текущую реализацию. Код пока не меняй.
+
+Промпт для исправления B-2:
+GET /books/recent отвечает 500, в логе сервера:
+TypeError: Cannot read properties of undefined (reading 'id')
+    at src/storage.ts:...
+Функция recent():
+    const book = all[all.length - i];
+    return { id: book.id, title: book.title };
+Ожидаемое поведение: вернуть до 3 последних книг, новые первыми; при пустом
+списке — []. Исправь и добавь тесты на 0, 1 и 5 книг.
+
+Обратная связь по галлюцинации:
+npm run check: src/validation-draft.ts(1,10): error TS2305:
+Module '"express"' has no exported member 'validateBody'.
+В документации Express 5 такой функции нет. Предложи, как проверить, что title —
+строка, без новых зависимостей. Код пока не меняй.</code></pre>
+                <pre><code># docs/B-4.md — Экспорт библиотеки
+1. Формат: JSON и CSV, без зависимостей
+2. Функция exportBooks(format: "json" | "csv") в src/storage.ts — зависит от 1
+   2.1 JSON
+   2.2 CSV
+3. Эндпойнт GET /books/export?format=json|csv — зависит от 2
+4. Тесты: пустая библиотека, оба формата, неизвестный формат → 422 — зависит от 3
+Открытый вопрос к владельцу продукта: экспорт всех книг или только прочитанных?</code></pre>
+              </div>
+            </details>
+
             <div class="note">
-              Стоимость плохого плана — ноль. Стоимость плохого исполнения —
-              грязный diff. Сначала план.
-            </div>
-
-            <h3>
-              <span class="step-label">Шаг 4</span>Ограниченная реализация
-            </h3>
-            <pre><code>Промпт:
-"Создай ТОЛЬКО app/main.py с эндпойнтом POST /ask (заглушка) и
-tests/test_ask.py. Другие файлы не трогай."</code></pre>
-
-            <h3><span class="step-label">Шаг 5</span>Проверка памяти</h3>
-            <pre><code>Закройте и снова откройте агента в папке проекта, спросите:
-"Какие у тебя правила по этому проекту?"
-Агент должен пересказать содержимое CLAUDE.md.</code></pre>
-            <div class="note">
-              <b>Вывод:</b> <code>CLAUDE.md</code> — постоянная память проекта;
-              правила задаются один раз и применяются в каждой сессии.
+              <b>Вывод:</b> агент восстанавливает намерение по коду, поэтому
+              бизнес-смысл нужно передавать явно. Точная ошибка, код и ожидаемое
+              поведение превращают «почини» в задачу с понятным результатом.
+              Выдумку агента ловит компилятор и документация, а не доверие к
+              ответу.
             </div>
           </article>
 
-          <!-- 3.3 -->
+          <!-- TASK 3.3 -->
           <article class="task" id="t3">
             <span class="chip">Задание 3.3</span>
-            <h2>Spec-driven development</h2>
-            <div class="goal">
-              <strong>Что делаем:</strong> сначала пишем спецификацию, затем
-              агент реализует по ней. <strong>Зачем:</strong> чёткая спека =
-              предсказуемый код и готовые критерии приёмки.
+            <h2>Spec Kit: от задачи к спецификации и плану</h2>
+            <div class="meta">
+              <span
+                ><b>Курсы:</b> Spec-Driven Development with GitHub Spec Kit;
+                EngX.AI Bootcamp</span
+              >
+              <span><b>Время:</b> ~60 мин, в первый раз — до 1,5 ч</span>
+              <span
+                ><b>Ветка:</b> <code>001-…</code> по имени фичи, создаёте сами
+                после <code>/speckit-specify</code>; в конце сливаете в
+                <code>main</code></span
+              >
+            </div>
+            <h3>Что делаем</h3>
+            <p>
+              Доводим B-4 (экспорт библиотеки) через Spec Kit до спецификации,
+              плана и списка задач. Код не пишем.
+            </p>
+
+            <h3>Зачем</h3>
+            <p>
+              Неточное требование — главная причина того, что агент делает «не
+              то». Спецификация задаёт цель и критерии приёмки. Правила, которые
+              действуют во всех шагах, живут отдельно — в constitution.
+            </p>
+
+            <h3>Условие</h3>
+            <ol class="cond">
+              <li>
+                <b>Установка.</b> В папке <code>shelf</code> выполните:
+                <code
+                  >uvx --from git+https://github.com/github/spec-kit.git specify
+                  init --here --integration claude</code
+                >. На вопрос про непустую папку ответьте «да» (или добавьте
+                <code>--force</code>, чтобы не спрашивал). Если Spec Kit
+                предложит добавить <code>.claude/</code> в
+                <code>.gitignore</code>, откажитесь: эти файлы нужны в
+                репозитории в 3.5. Перезапустите Claude Code и закоммитьте:
+                <code
+                  >git add -A &amp;&amp; git commit -m "chore: add Spec
+                  Kit"</code
+                >.
+              </li>
+              <li>
+                <b>Constitution.</b> Команды Spec Kit — это скиллы из
+                <code>.claude/skills/</code>, а их список Claude Code читает при
+                старте. Поэтому в сессии, которая была открыта до установки,
+                команды <b>не появятся</b>: выйдите (<code>/exit</code> или
+                <code>Ctrl+D</code>) и запустите <code>claude</code> заново —
+                обязательно из папки <code>shelf</code>, иначе скиллы не
+                найдутся. Проверка: наберите <code>/speckit</code> — в списке
+                должны всплыть девять команд. Правила можно передать сразу
+                аргументом, одной строкой:
+                <pre><code>/speckit-constitution только localhost (никаких внешних сервисов и сетевых вызовов);
+тесты сначала (сначала падающий тест, потом код); без новых зависимостей
+без обоснования</code></pre>
+                Либо вызвать <code>/speckit-constitution</code> без аргументов и
+                отвечать на вопросы — тогда формулировки придётся диктовать по
+                ходу. Каждое правило должно проверяться ответом «да» или «нет»;
+                расплывчатое «писать качественный код» не годится. Агент
+                предложит черновик — прочитайте его и поправьте формулировки,
+                прежде чем соглашаться. Результат — файл
+                <code>.specify/memory/constitution.md</code>; других файлов этот
+                шаг менять не должен.
+              </li>
+              <li>
+                <b>Specify.</b> Запустите <code>/speckit-specify</code> и
+                вставьте текст задачи B-4 с припиской: «декомпозиция — в
+                docs/B-4.md». Spec Kit создаст каталог фичи, например
+                <code>specs/001-export-library/</code>, с файлом
+                <code>spec.md</code> внутри. Проверка — <code>ls specs/</code>;
+                текущую фичу Spec Kit держит в
+                <code>.specify/feature.json</code> (этот файл локальный, он в
+                <code>.gitignore</code>).
+              </li>
+              <li>
+                <b>Ветка.</b> Ветку Spec Kit <b>не создаёт</b> — номер
+                <code>001-…</code> это имя фичи, а не ветки. Сделайте её сами, по
+                имени каталога, пока правки не закоммичены:
+                <code>git switch -c 001-export-library</code>. Проверьте:
+                <code>git branch --show-current</code>. В версиях до 1.4
+                <code>specify</code> переключал ветку сам — если у вас так,
+                этот шаг пропустите.
+              </li>
+              <li>
+                <b>Clarify.</b> Запустите <code>/speckit-clarify</code> и
+                отвечайте на вопросы сами, как владелец продукта. Агент не
+                должен решать за вас. Проверка:
+                <code>grep -rn "NEEDS CLARIFICATION" specs/</code> ничего не
+                выводит.
+              </li>
+              <li>
+                <b>Plan.</b> Запустите <code>/speckit-plan</code>, появится
+                <code>plan.md</code>. Проверьте <code>git diff CLAUDE.md</code>:
+                если Spec Kit дописал свой раздел, уберите его.
+                <code>CLAUDE.md</code> должен остаться вашим.
+              </li>
+              <li>
+                <b>Tasks.</b> Запустите <code>/speckit-tasks</code>, появится
+                <code>tasks.md</code>. Закоммитьте всё:
+                <code
+                  >git add -A &amp;&amp; git commit -m "docs: spec for export
+                  (B-4)"</code
+                >.
+              </li>
+              <li>
+                <b><code>docs/notes.md</code>.</b> Запишите порядок
+                команд, которые вы выполнили, и какой файл создал каждый шаг.
+                Реализацию делать не нужно.
+              </li>
+              <li>
+                Слейте ветку сами:
+                <code
+                  >git switch main &amp;&amp; git merge
+                  001-export-library</code
+                > (имя возьмите из <code>git branch</code>).
+              </li>
+            </ol>
+            <div class="note">
+              <b>Названия и установка зависят от версии Spec Kit.</b> Здесь
+              всё написано под текущую (проверено на 1.4.1): команды ставятся
+              как скиллы в <code>.claude/skills/</code> и пишутся через дефис —
+              <code>/speckit-constitution</code>, <code>/speckit-specify</code>,
+              <code>/speckit-clarify</code>, <code>/speckit-plan</code>,
+              <code>/speckit-tasks</code>. В версиях постарше была точка
+              (<code>/speckit.specify</code>), ещё раньше — вообще без
+              префикса, а вместо <code>--integration claude</code> был
+              <code>--ai claude</code>, а <code>/speckit-specify</code> сам
+              переключал на новую ветку. Если команда не находится, посмотрите
+              <code>specify init --help</code> и <code>specify check</code>, а
+              список установленного — в <code>.claude/skills/</code>. Если файл
+              не создался, посмотрите вывод команды: Spec Kit пишет, что создал.
             </div>
 
-            <h3><span class="step-label">Шаг 1</span>Пишем спецификацию</h3>
-            <pre><code># spec/ask-endpoint.md
-## Фича: POST /ask
-Вход:  {"question": string, непустая}
-Выход: {"answer": string, "sources": string[]}
-Правила:
-- Пустой вопрос -> HTTP 422.
-- Длина вопроса &lt;= 500 символов.
-- sources пока всегда [].
-Критерии приёмки:
-- Тест на успешный ответ.
-- Тест на пустой вопрос (422).
-- Тест на слишком длинный вопрос (422).</code></pre>
+            <h3>Критерии готовности</h3>
+            <ul class="criteria">
+              <li>
+                В constitution не меньше трёх проверяемых правил, среди них
+                «только localhost», «тесты сначала» и «без новых зависимостей».
+              </li>
+              <li>
+                В <code>spec.md</code> перед запуском plan нет меток
+                <code>NEEDS CLARIFICATION</code>. Ответы на них записаны в spec.
+              </li>
+              <li>
+                Есть <code>plan.md</code> и <code>tasks.md</code>; для каждого
+                критерия приёмки из <code>spec.md</code> есть задача, которая
+                его закрывает.
+              </li>
+              <li>
+                В <code>docs/notes.md</code> записаны порядок команд и файлы
+                каждого шага.
+              </li>
+              <li>
+                Ветка <code>001-…</code> создана вами и слита в
+                <code>main</code>.
+              </li>
+            </ul>
 
-            <h3>
-              <span class="step-label">Шаг 2</span>Агент строит план по спеке
-            </h3>
-            <pre><code>Промпт:
-"Прочитай spec/ask-endpoint.md. Plan: какие файлы и тесты нужны,
-чтобы выполнить все критерии приёмки? Код не пиши."</code></pre>
+            <details>
+              <summary>Подсказки</summary>
+              <div class="body">
+                <ul class="cond">
+                  <li>
+                    Для установки нужен <code>uv</code> (<code
+                      >brew install uv</code
+                    >
+                    или <code>pip install uv</code>).
+                  </li>
+                  <li>
+                    Правило «код должен быть качественным» проверить нельзя.
+                    Правило «у каждой экспортируемой функции в src/ есть тест»
+                    проверить можно.
+                  </li>
+                  <li>
+                    Если пропустить метки <code>NEEDS CLARIFICATION</code>,
+                    решения за вас примет агент.
+                  </li>
+                </ul>
+              </div>
+            </details>
 
-            <h3><span class="step-label">Шаг 3</span>Реализация валидации</h3>
-            <pre><code>from fastapi import FastAPI
-from pydantic import BaseModel, Field
+            <details class="solution">
+              <summary>Показать пример решения</summary>
+              <div class="body">
+                <p class="warn">Откройте после собственной попытки.</p>
+                <pre><code># constitution.md (фрагмент)
+1. Только localhost: сервер слушает localhost, внешних сервисов и сетевых вызовов нет.
+2. Тесты сначала: новая функция появляется только после падающего теста.
+3. Без новых зависимостей: если нужна библиотека — обоснование в plan.md.
+4. npm run check проходит перед каждым коммитом, кроме test:-коммита с намеренно
+   падающими тестами; any и @ts-ignore запрещены.</code></pre>
+                <pre><code>Ответы на NEEDS CLARIFICATION для B-4 (пример, отвечает владелец продукта):
+- Что экспортируется? Все книги, без фильтров. Фильтры — отдельная задача.
+- Какие форматы? JSON и CSV.
+- Что при пустой библиотеке? JSON — [], CSV — только строка заголовков.
+- Нужна ли авторизация? Нет, в проекте её пока нет.</code></pre>
+              </div>
+            </details>
 
-app = FastAPI()
-
-class AskRequest(BaseModel):
-    question: str = Field(min_length=1, max_length=500)
-
-class AskResponse(BaseModel):
-    answer: str
-    sources: list[str]
-
-@app.post("/ask", response_model=AskResponse)
-def ask(req: AskRequest) -> AskResponse:
-    return AskResponse(answer=f"Заглушка: {req.question}", sources=[])</code></pre>
-
-            <h3>
-              <span class="step-label">Шаг 4</span>Тесты по критериям приёмки
-            </h3>
-            <pre><code>from fastapi.testclient import TestClient
-from app.main import app
-client = TestClient(app)
-
-def test_ok():
-    assert client.post("/ask", json={"question": "привет"}).status_code == 200
-
-def test_empty():
-    assert client.post("/ask", json={"question": ""}).status_code == 422
-
-def test_too_long():
-    assert client.post("/ask", json={"question": "x" * 501}).status_code == 422</code></pre>
-
-            <h3><span class="step-label">Шаг 5</span>Приёмка</h3>
-            <pre><code>pytest -q
-# все три теста должны пройти — спецификация выполнена</code></pre>
             <div class="note">
-              <b>Вывод:</b> спека даёт агенту цель и одновременно критерии
-              проверки. Код «готов», когда зелёные тесты по приёмке.
+              <b>Вывод:</b> главный контроль над результатом агента — точная
+              спецификация. Правила для всех фич живут в constitution, а не
+              повторяются в каждом описании. Вопросы к требованиям решает
+              человек.
             </div>
           </article>
 
-          <!-- 3.4 -->
+          <!-- TASK 3.4 -->
           <article class="task" id="t4">
             <span class="chip">Задание 3.4</span>
-            <h2>Проверка вывода агента</h2>
-            <div class="goal">
-              <strong>Что делаем:</strong> намеренно ловим ошибку в коде агента.
-              <strong> Зачем:</strong> AI-код выглядит правильным чаще, чем
-              является им; чтение diff — обязательный навык.
+            <h2>Агентный режим, «сначала тесты» и проверка</h2>
+            <div class="meta">
+              <span
+                ><b>Курсы:</b> Structured Vibe Coding; EngX.AI Bootcamp; GitHub
+                Copilot Capabilities</span
+              >
+              <span><b>Время:</b> ~60 мин</span>
+              <span
+                ><b>Ветка:</b> <code>task-3.4</code> от свежего
+                <code>main</code>; слить в конце задания</span
+              >
             </div>
+            <h3>Что делаем</h3>
+            <p>
+              Работаем с агентом в цикле «тесты → код → проверка», потом правим
+              логирование в нескольких файлах в агентном режиме.
+            </p>
 
-            <h3>
-              <span class="step-label">Шаг 1</span>Просим нетривиальную функцию
-            </h3>
-            <pre><code>Промпт агенту:
-"Реализуй функцию paginate(items, page, per_page), которая
-возвращает срез страницы. Страницы нумеруются с 1."</code></pre>
+            <h3>Зачем</h3>
+            <p>
+              Вывод агента недетерминирован, поэтому его сочетают с проверками:
+              типами, линтером и тестами. Регрессии от прошлых правок ловит
+              запуск старых тестов. Человек — navigator: задаёт направление,
+              останавливает и откатывает агента. Агент — driver: пишет код.
+              Решение о merge остаётся за человеком.
+            </p>
 
-            <h3>
-              <span class="step-label">Шаг 2</span>Типичный ответ агента (с
-              багом)
-            </h3>
-            <pre><code>def paginate(items, page, per_page):
-    start = page * per_page          # БАГ: при page=1 пропускает первую страницу
-    end = start + per_page
-    return items[start:end]</code></pre>
+            <h3>Условие</h3>
+            <ol class="cond">
+              <li>
+                Создайте ветку от свежего <code>main</code>:
+                <code>git switch main &amp;&amp; git switch -c task-3.4</code>.
+              </li>
+              <li>
+                <b>B-5, тесты по таблице примеров (ping).</b> В бэклоге правило
+                сказано коротко. Задайте его таблицей примеров и попросите
+                агента написать по ним тесты в
+                <code>tests/validation.test.ts</code>, код не менять:
+                <table>
+                  <tr>
+                    <th>Название</th>
+                    <th>Ответ</th>
+                  </tr>
+                  <tr>
+                    <td><code>"Дюна"</code></td>
+                    <td>200</td>
+                  </tr>
+                  <tr>
+                    <td><code>" Дюна "</code></td>
+                    <td>200, название сохраняется как «Дюна»</td>
+                  </tr>
+                  <tr>
+                    <td><code>""</code> или <code>" "</code></td>
+                    <td>422 и <code>{ detail }</code></td>
+                  </tr>
+                  <tr>
+                    <td>строка длиннее 120 символов</td>
+                    <td>422</td>
+                  </tr>
+                  <tr>
+                    <td>поля <code>title</code> нет, или это число</td>
+                    <td>422</td>
+                  </tr>
+                </table>
+                Запустите <code>npm test</code>: тесты должны быть красными.
+                Закоммитьте: <code>test: book title rules (B-5)</code>.
+              </li>
+              <li>
+                <b>B-5, реализация (pong).</b> Попросите агента изменить
+                <code>src/app.ts</code>, пока тесты не пройдут. Тесты не менять,
+                новые зависимости не добавлять. Закоммитьте:
+                <code>feat: validate book title (B-5)</code>.
+              </li>
+              <li>
+                <b>Регрессия.</b> После pong запустите
+                <code>npm run check</code>. Тесты B-1 и B-2 из 3.2 должны
+                остаться зелёными. Если агент сломал старое исправление,
+                откатите его через <code>/rewind</code> и запишите в
+                <code>docs/notes.md</code>.
+              </li>
+              <li>
+                <b>Необязательно: B-3.</b> Тем же способом, что B-5: напишите
+                тесты на пагинацию (первая страница — это <code>page=1</code>),
+                запустите их, убедитесь, что они красные, затем попросите агента
+                исправить <code>paginate()</code>.
+              </li>
+              <li>
+                <b>Режим плана (B-6).</b> Включите режим плана:
+                <code>Shift+Tab</code>, пока внизу не появится «plan mode on».
+                Спросите: «где в проекте console.log и как их заменить?». Агент
+                отвечает и ничего не меняет.
+              </li>
+              <li>
+                <b>Агентный режим (B-6).</b> Выйдите из режима плана и
+                попросите: заменить <code>console.log</code> на
+                <code>getLogger</code> во всех файлах и добавить правило ESLint
+                <code>no-console</code>. Агент должен сам запустить
+                <code>npm run check</code> и исправлять ошибки, пока проверка не
+                пройдёт.
+              </li>
+              <li>
+                <b>Navigator.</b> Хотя бы раз остановите агента клавишей
+                <code>Esc</code>, когда он уходит не туда, и хотя бы раз
+                откатите правку через <code>/rewind</code>. Если агент ни разу
+                не ошибся, остановите его на середине B-6 и попросите продолжить
+                иначе: «сначала только <code>src/storage.ts</code>, остальное —
+                после моей проверки».
+              </li>
+              <li>
+                <b>Ревью.</b> Прочитайте <code>git diff main...HEAD</code> и
+                найдите хотя бы одно замечание: лишнюю правку, пропущенный
+                случай или слабый тест. Попросите агента исправить его отдельным
+                коммитом.
+              </li>
+              <li>
+                <b>Коммит остатка.</b> Перед merge в ветке не должно остаться
+                несохранённых правок: <code>git status</code> — чисто.
+                Закоммитьте то, что сделано после <code>feat:</code> — B-6 и
+                правило ESLint:
+                <code>chore: use getLogger everywhere (B-6)</code>, записи в
+                <code>docs/notes.md</code>: <code>docs: notes for 3.4</code>.
+                Перед
+                каждым из этих коммитов <code>npm run check</code> должен быть
+                зелёным — исключение из constitution действует только для
+                <code>test:</code>-коммита с намеренно красными тестами.
+              </li>
+              <li>
+                <b>Merge — решение человека.</b> Слейте ветку сами:
+                <code>git switch main &amp;&amp; git merge task-3.4</code>.
+                Агент не делает push и merge: это запрет из
+                <code>CLAUDE.md</code>.
+              </li>
+            </ol>
 
-            <h3>
-              <span class="step-label">Шаг 3</span>Читаем diff и находим ошибку
-            </h3>
-            <pre><code>git diff
-# Вопрос к себе: при page=1 и per_page=10 start=10 -> это уже вторая страница.
-# Off-by-one: нумерация с 1 не учтена.</code></pre>
+            <details>
+              <summary>В Copilot и Cursor (необязательно)</summary>
+              <div class="body">
+                <p>
+                  Для тех, кто работает в Copilot или Cursor. Остальные могут
+                  пропустить этот блок.
+                </p>
+                <div class="note">
+                  <b>Режимы работы.</b>
+                  <ul class="cond">
+                    <li>
+                      <b>Аналог:</b> в Copilot inline completion — подсказка у
+                      курсора; Ask — отвечает без изменений; Plan — составляет
+                      план на ревью; Agent — меняет несколько файлов, запускает
+                      команды и повторяет, пока цель не достигнута. В Cursor —
+                      Tab, Ask и Agent.
+                    </li>
+                    <li>
+                      <b>С чем путают:</b> Ask и Plan не меняют код и не
+                      запускают тесты, поэтому задачу «правка в нескольких
+                      файлах и тесты до зелёного» они не решат.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </details>
 
-            <h3>
-              <span class="step-label">Шаг 4</span>Исправляем и покрываем тестом
-            </h3>
-            <pre><code>def paginate(items, page, per_page):
-    start = (page - 1) * per_page    # исправлено
-    return items[start:start + per_page]
+            <h3>Критерии готовности</h3>
+            <ul class="criteria">
+              <li>
+                В истории коммит <code>test:</code> с тестами идёт раньше
+                коммита <code>feat:</code>, и на коммите с тестами они красные.
+              </li>
+              <li>Тесты покрывают все строки таблицы примеров.</li>
+              <li>
+                <code>npm run check</code> проходит, тесты B-1 и B-2 тоже.
+              </li>
+              <li>
+                <code>git diff --stat main...task-3.4</code> перед merge
+                показывает только файлы задачи: код и тесты B-5 и B-6,
+                <code>eslint.config.js</code>, <code>docs/notes.md</code> и,
+                если меняли, <code>CLAUDE.md</code>.
+              </li>
+              <li>
+                Есть хотя бы одно замечание из ревью и его исправление отдельным
+                коммитом.
+              </li>
+              <li>
+                В <code>docs/notes.md</code>: какие шаги были в режиме плана,
+                какие в агентном, когда вы остановили или откатили агента и
+                почему.
+              </li>
+              <li>Merge в <code>main</code> сделан вами после ревью.</li>
+            </ul>
 
-def test_first_page():
-    assert paginate(list(range(30)), 1, 10) == list(range(0, 10))
-def test_second_page():
-    assert paginate(list(range(30)), 2, 10) == list(range(10, 20))</code></pre>
+            <details>
+              <summary>Подсказки</summary>
+              <div class="body">
+                <ul class="cond">
+                  <li>
+                    Проверить, что тесты были красными:
+                    <code
+                      >git checkout &lt;коммит с тестами&gt; &amp;&amp; npm
+                      test</code
+                    >, затем <code>git checkout -</code>. Сообщение «detached
+                    HEAD» — нормально.
+                  </li>
+                  <li>
+                    <code>Esc</code> останавливает агента, история сохраняется.
+                    <code>/rewind</code>
+                    возвращает код и диалог к точке до правки.
+                  </li>
+                  <li>
+                    Перед сессией с агентом сделайте коммит: неудачную правку
+                    можно откатить через git.
+                  </li>
+                </ul>
+              </div>
+            </details>
 
-            <h3><span class="step-label">Шаг 5</span>Дисциплина коммитов</h3>
-            <pre><code>git add -A
-git commit -m "fix: off-by-one in paginate, add tests"</code></pre>
+            <details class="solution">
+              <summary>Показать пример решения</summary>
+              <div class="body">
+                <p class="warn">Откройте после собственной попытки.</p>
+                <pre><code>Ping (B-5):
+Напиши тесты в tests/validation.test.ts для POST /books по таблице:
+"Дюна" → 200; "  Дюна  " → 200 и название "Дюна"; "" и "   " → 422 с { detail };
+строка длиннее 120 символов → 422; поля title нет или оно число → 422.
+Только тесты, код не меняй. Запусти npm test и покажи, что они красные.
+
+Pong:
+Измени src/app.ts так, чтобы тесты из tests/validation.test.ts прошли.
+Тесты не меняй, новых зависимостей не добавляй. После правки запусти npm run check.
+Тесты B-1 и B-2 должны остаться зелёными.</code></pre>
+                <pre><code>$ git log --oneline
+c3d9e21 feat: validate book title (B-5)
+a81f0b4 test: book title rules (B-5)   # здесь тесты красные</code></pre>
+                <pre><code># docs/notes.md, раздел 3.4 (пример)
+Режим плана: поиск console.log и план замены — без правок.
+Агентный режим: B-6 — правки в нескольких файлах и запуск npm run check.
+Регрессия: после pong тест B-2 упал из-за порядка в recent() — откатил через /rewind,
+попросил поменять только тело функции.
+Остановил агента, когда он начал менять тесты из ping-коммита вместо кода.</code></pre>
+              </div>
+            </details>
+
             <div class="note">
-              <b>Вывод:</b> коммитьте до сессии агента, читайте весь diff,
-              запускайте тесты сами — не доверяйте фразе «готово».
+              <b>Вывод:</b> человек задаёт направление и проверяет, агент пишет
+              код. Типы, линтер, тесты и <code>npm run check</code> ловят то,
+              что «выглядит правильно», и регрессии от прошлых правок. Решение о
+              merge принимает человек.
             </div>
           </article>
 
-          <!-- 3.5 -->
+          <!-- TASK 3.5 -->
           <article class="task" id="t5">
             <span class="chip">Задание 3.5</span>
-            <h2>Свои команды и structured vibe coding</h2>
-            <div class="goal">
-              <strong>Что делаем:</strong> оформляем повторяемый промпт в
-              команду <code>/review</code>. <strong>Зачем:</strong> то, что вы
-              печатаете чаще двух раз, должно стать переиспользуемой командой
-              для всей команды.
+            <h2>Свои команды, hooks и MCP</h2>
+            <div class="meta">
+              <span
+                ><b>Курсы:</b> Claude Code in Action; Cursor Basics 101; GitHub
+                Copilot Capabilities; AI-Native SDLC</span
+              >
+              <span><b>Время:</b> ~60 мин, в первый раз — до 1,5 ч</span>
+              <span
+                ><b>Ветка:</b> <code>task-3.5</code> от свежего
+                <code>main</code>; в конце слить и запушить</span
+              >
+            </div>
+            <h3>Что делаем</h3>
+            <p>
+              Превращаем повторяющееся действие в команду, правило, которое
+              нельзя нарушить, в hook, а доступ к трекеру — в MCP. Всё это
+              коммитим.
+            </p>
+
+            <h3>Зачем</h3>
+            <p>
+              То, что делается чаще двух раз, должно быть командой. То, что
+              нельзя нарушать, — hook, а не просьба в <code>CLAUDE.md</code>:
+              просьбу агент может не выполнить. Общие настройки в репозитории
+              получает каждый, кто клонирует проект.
+            </p>
+
+            <h3>Условие</h3>
+            <ol class="cond">
+              <li>
+                <b>Ветка.</b> Репозиторий на GitHub вы создали в начале модуля,
+                в разделе «Учебный проект». Убедитесь, что <code>main</code>
+                там свежий: <code>git switch main &amp;&amp; git push</code>.
+                Затем <code>git switch -c task-3.5</code>.
+              </li>
+              <li>
+                <b>Команда.</b> Создайте
+                <code>.claude/commands/new-endpoint.md</code>: пошаговый шаблон
+                эндпойнта — тип запроса, функция хранилища, роут, тест,
+                <code>npm run check</code>. Аргументы подставляются через
+                <code>$ARGUMENTS</code>. Перезапустите Claude Code, наберите
+                <code>/</code>: команда должна быть в списке.
+              </li>
+              <li>
+                <b>Hook PreToolUse.</b> Скрипт
+                <code>.claude/hooks/block-env.mjs</code> блокирует чтение
+                <code>.env</code> с понятным сообщением (код 2). Подключите его
+                в <code>.claude/settings.json</code>, а не в
+                <code>settings.local.json</code>. Проверьте без агента:
+                <code
+                  >echo '{"tool_input":{"file_path":".env"}}' | node
+                  .claude/hooks/block-env.mjs; echo $?</code
+                >
+                — выведется ваше сообщение и <code>2</code>. Затем с агентом:
+                «прочитай файл .env инструментом Read». В выводе должно быть
+                ваше сообщение.
+              </li>
+              <li>
+                <b>Issues для MCP.</b> В GitHub создайте два Issue вручную:
+                «B-8: GET /books/:id» и «B-9: DELETE /books/:id». Текст возьмите
+                из <code>BACKLOG.md</code>. Запомните номера.
+              </li>
+              <li>
+                <b>Подключение MCP.</b> Создайте fine-grained token только для
+                репозитория <code>shelf</code> с правами <b>Issues: Read</b> и
+                <b>Metadata: Read</b>. Затем:
+                <code
+                  >claude mcp add --transport http github
+                  https://api.githubcopilot.com/mcp/ --header "Authorization:
+                  Bearer &lt;токен&gt;"</code
+                >. Проверьте в Claude Code командой <code>/mcp</code>: сервер
+                <code>github</code> подключён.
+              </li>
+              <li>
+                <b>Команда с тикетом.</b> Введите:
+                <code
+                  >/new-endpoint прочитай через GitHub MCP issue #&lt;номер
+                  B-8&gt; в репозитории shelf и реализуй его</code
+                >. Агент должен вызвать инструмент MCP, это видно в выводе.
+                Запишите его имя в <code>docs/notes.md</code>. Затем B-9
+                сделайте той же командой.
+                Закройте оба Issue вручную.
+              </li>
+              <li>
+                <b>Контекст.</b> Попросите тесты для <code>markRead()</code> из
+                <code>src/storage.ts</code> и доведите их до зелёного. Затем
+                введите <code>/compact</code> и спросите: «какие тест-кейсы ты
+                написал для markRead() и что исправлял по ходу?». Запишите
+                ответ. Попросите тесты для <code>listBooks()</code>. Затем
+                введите <code>/clear</code>, задайте тот же вопрос и сравните
+                ответы.
+              </li>
+              <li>
+                <b>Общие настройки команды.</b> Закоммитьте
+                <code>.claude/commands/</code>, <code>.claude/hooks/</code> и
+                <code>.claude/settings.json</code>. В <code>docs/notes.md</code>
+                напишите, что
+                получит коллега после клонирования репозитория.
+              </li>
+              <li>
+                <b>Merge и push.</b> Прочитайте diff и слейте ветку сами:
+                <code>git switch main &amp;&amp; git merge task-3.5</code>,
+                затем <code>git push origin main</code>.
+              </li>
+            </ol>
+            <div class="note">
+              <b>Токен для GitHub MCP.</b> Права — <b>Issues: Read</b> и
+              <b>Metadata: Read</b>. С ними агент читает Issues, но не создаёт и
+              не комментирует их. Токен не кладите в файлы репозитория:
+              <code>claude mcp add</code> без <code>--scope project</code>
+              сохраняет его в ваших личных настройках.
             </div>
 
-            <h3><span class="step-label">Шаг 1</span>Создаём команду</h3>
-            <pre><code># .claude/commands/review.md
-Проверь последние изменения. Найди:
-- отсутствующие или неполные тесты;
-- забытые print/console.log;
-- захардкоженные значения вместо переменных окружения;
-- функции длиннее 30 строк;
-- отсутствие валидации на новых эндпойнтах.
-Выведи нумерованный список, пометь [MUST FIX] / [SHOULD FIX] / [SUGGESTION].</code></pre>
+            <details>
+              <summary>В Copilot и Cursor (необязательно)</summary>
+              <div class="body">
+                <p>
+                  Для тех, кто работает в Copilot или Cursor. Остальные могут
+                  пропустить этот блок.
+                </p>
+                <div class="note">
+                  <b>MCP для трекера.</b>
+                  <ul class="cond">
+                    <li>
+                      <b>Аналог:</b> в Copilot в VS Code —
+                      <code>.vscode/mcp.json</code>, в Cursor —
+                      <code>.cursor/mcp.json</code>. Файл можно коммитить, токен
+                      в него не кладут.
+                    </li>
+                    <li>
+                      <b>С чем путают:</b> ссылка на тикет в файле правил — это
+                      только текст. Открыть её агент не может.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </details>
 
-            <h3><span class="step-label">Шаг 2</span>Запускаем</h3>
-            <pre><code>/review</code></pre>
+            <h3>Критерии готовности</h3>
+            <ul class="criteria">
+              <li>
+                Команда, вызванная дважды для разных эндпойнтов (B-8 и B-9),
+                создаёт одинаковую структуру файлов и тестов.
+              </li>
+              <li>
+                Чтение <code>.env</code> блокируется: проверка без агента
+                выводит ваше сообщение и код <code>2</code>.
+              </li>
+              <li>
+                Агент прочитал Issue B-8 через MCP: в
+                <code>docs/notes.md</code> записано имя вызванного инструмента.
+              </li>
+              <li>
+                В <code>docs/notes.md</code>: ответ на контрольный вопрос после
+                <code>/compact</code> и после <code>/clear</code>, и чем они
+                отличались.
+              </li>
+              <li>
+                <code>git ls-files .claude</code> показывает команды, hooks и
+                <code>settings.json</code>; <code>main</code> отправлен на
+                GitHub.
+              </li>
+            </ul>
 
-            <h3><span class="step-label">Шаг 3</span>Уточняем под себя</h3>
-            <pre><code>Если вывод слишком общий — добавьте в команду:
-"Игнорируй тестовые файлы и комментарии. Указывай файл и строку."</code></pre>
+            <details>
+              <summary>Подсказки</summary>
+              <div class="body">
+                <ul class="cond">
+                  <li>
+                    Hook получает описание вызова инструмента в stdin в виде
+                    JSON. Код выхода 2 блокирует вызов, а текст из stderr
+                    получает агент.
+                  </li>
+                  <li>
+                    <code>/compact</code> сжимает историю и сохраняет то, что
+                    агент узнал. <code>/clear</code> начинает с чистого листа.
+                  </li>
+                  <li>
+                    Пишите hooks на Node.js (<code>.mjs</code>): они работают
+                    одинаково на macOS, Linux и Windows.
+                  </li>
+                  <li>
+                    Проверить MCP: <code>claude mcp list</code> или
+                    <code>/mcp</code> внутри сессии.
+                  </li>
+                </ul>
+              </div>
+            </details>
+
+            <details class="solution">
+              <summary>Показать пример решения</summary>
+              <div class="body">
+                <p class="warn">Откройте после собственной попытки.</p>
+                <pre><code># .claude/commands/new-endpoint.md
+Создай новый эндпойнт: $ARGUMENTS
+
+Шаги:
+1. Тип тела запроса и ответа — в src/app.ts рядом с остальными, без any.
+2. Логика — экспортируемая функция в src/storage.ts.
+3. Роут — в src/app.ts.
+4. Тест — tests/&lt;имя&gt;.test.ts (Vitest + supertest): успешный случай и ошибка 404.
+5. Запусти npm run check и верни только итог.
+Другие файлы не меняй.</code></pre>
+                <pre><code>// .claude/settings.json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read|Edit|Write|Bash|Grep",
+        "hooks": [{ "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/block-env.mjs" }]
+      }
+    ]
+  }
+}</code></pre>
+                <pre><code>// .claude/hooks/block-env.mjs
+import { readFileSync } from "node:fs";
+
+const input = JSON.parse(readFileSync(0, "utf8")).tool_input ?? {};
+const target = ["file_path", "path", "command", "pattern"].map((k) =&gt; String(input[k] ?? "")).join(" ");
+if (/(^|[\s/'"])\.env(?![\w.])/.test(target)) {
+  console.error("Чтение .env запрещено правилами проекта.");
+  process.exit(2); // код 2 блокирует вызов инструмента
+}</code></pre>
+              </div>
+            </details>
+
+            <div class="note">
+              <b>Вывод:</b> команды делают повторяющиеся задачи одинаковыми для
+              всей команды, hooks гарантируют правила, которые нельзя нарушать,
+              а MCP даёт агенту доступ к трекеру без копирования тикетов. Всё
+              это лежит в репозитории.
+            </div>
+          </article>
+
+          <!-- FINAL -->
+          <article class="task final" id="final">
+            <span class="chip">Итоговое задание модуля</span>
+            <h2>Фича от тикета до PR</h2>
+            <div class="meta">
+              <span><b>Подтемы:</b> 3.1–3.5</span>
+              <span><b>Время:</b> 1,5–2 часа</span>
+              <span><b>Результат:</b> PR + заметка о решениях</span>
+              <span
+                ><b>Ветка:</b> <code>002-…</code> по имени фичи, создаёте
+                сами; в <code>main</code> попадает через PR на GitHub</span
+              >
+            </div>
+            <div class="goal">
+              <strong>Сценарий:</strong> эпик B-7 «Пользователи забывают вернуть
+              книги в библиотеку. Нужно напоминать о сроках». Требований почти
+              нет — их нужно выяснить и записать.
+            </div>
+            <div class="note">
+              <b>Объём ограничен:</b> 2–3 критерия приёмки в
+              <code>spec.md</code> и один новый эндпойнт — например
+              <code>GET /books/overdue</code>, — ничего больше. Почта,
+              push-уведомления, часовые пояса, планировщик и повторяющиеся
+              напоминания — вне объёма: запишите их в раздел PR «Что осталось».
+              Если агент предлагает больше, сократите спецификацию на шаге
+              clarify. Урезать объём — часть задания, а не поблажка.
+            </div>
+
+            <h3>Путь</h3>
+            <p>
+              Правила проекта → constitution и спецификация → разбор вопросов →
+              план и задачи → реализация «сначала тесты» → своя команда
+              <code>/self-review</code> → <code>npm run check</code> → PR с
+              описанием.
+            </p>
+            <ol class="cond">
+              <li>
+                Создайте на GitHub Issue «B-7: напоминания о возврате книг» с
+                текстом эпика из
+                <code>BACKLOG.md</code>. Начните от <code>main</code>:
+                <code>git switch main</code>. Запустите
+                <code>/speckit-specify</code> и попросите агента взять описание
+                из Issue через GitHub MCP, как в 3.5. Spec Kit создаст
+                каталог <code>specs/002-…/</code> — проверьте
+                <code>ls specs/</code>. Ветку он <b>не создаёт</b>: сделайте её
+                сами по имени каталога, <code>git switch -c 002-…</code>, как в
+                3.3. Сразу первый коммит:
+                <code
+                  >git add -A &amp;&amp; git commit -m "docs: draft spec
+                  (B-7)"</code
+                >. От него считается время до PR.
+              </li>
+              <li>
+                Дальше как в 3.3: <code>/speckit-clarify</code>,
+                <code>/speckit-plan</code>, <code>/speckit-tasks</code>, коммит
+                после каждого шага. Ответы на вопросы даёте вы.
+              </li>
+              <li>
+                Реализация по <code>tasks.md</code>. Хотя бы одну задачу
+                проведите циклом ping-pong из 3.4: сначала коммит
+                <code>test:</code> с красными тестами по критериям приёмки,
+                затем <code>feat:</code>. Остальные — обычным порядком, навык
+                уже отработан в 3.4. Тесты B-1…B-6 после каждого шага должны
+                оставаться зелёными.
+              </li>
+              <li>
+                <b>Команда <code>/self-review</code>.</b> Создайте
+                <code>.claude/commands/self-review.md</code>. Команда просит
+                агента прочитать <code>git diff main...HEAD</code>, сверить его
+                с <code>CLAUDE.md</code>, constitution и <code>spec.md</code> и
+                перечислить нарушения и критерии приёмки без тестов. Код она не
+                правит. Назовите её не <code>/review</code>: такое имя занято
+                встроенной командой Claude Code. Как и в 3.5, список команд
+                читается при старте — перезапустите Claude Code и проверьте
+                по <code>/</code>.
+              </li>
+              <li>
+                <b>Заметка о решениях</b> — файл
+                <code>docs/B-7-decisions.md</code> в этой ветке. Метрики из
+                <code>git log main..HEAD</code> посчитайте <b>до merge</b>.
+              </li>
+              <li>
+                Ветку отправляете и PR открываете вы:
+                <code>git push -u origin 002-…</code>, затем PR в
+                <code>main</code> — в веб-интерфейсе GitHub, по ссылке
+                «Compare &amp; pull request». В описании —
+                <code>Closes #&lt;номер B-7&gt;</code>. Merge тоже в интерфейсе
+                GitHub, после <code>/self-review</code> и чтения diff, затем
+                локально <code>git switch main &amp;&amp; git pull</code>.
+              </li>
+            </ol>
+
+            <h3>Критерии приёмки</h3>
+            <table>
+              <tr>
+                <th>Подтема</th>
+                <th>Критерий</th>
+              </tr>
+              <tr>
+                <td>3.1 Правила</td>
+                <td>
+                  Агент соблюдает <code>CLAUDE.md</code> без напоминаний; личные
+                  правила не в репозитории; <code>CLAUDE.md</code> менялся по
+                  ходу модуля (не меньше трёх коммитов).
+                </td>
+              </tr>
+              <tr>
+                <td>3.2 Тесты</td>
+                <td>
+                  Тесты проверяют бизнес-правила из спецификации, а не текущее
+                  поведение кода.
+                </td>
+              </tr>
+              <tr>
+                <td>3.3 Спецификация</td>
+                <td>
+                  Есть constitution и спецификация без
+                  <code>NEEDS CLARIFICATION</code>; каждый критерий приёмки
+                  закрыт тестом.
+                </td>
+              </tr>
+              <tr>
+                <td>3.4 Проверка</td>
+                <td>
+                  Коммит с тестами раньше реализации;
+                  <code>npm run check</code> проходит; регрессии B-1…B-6 не
+                  появились; изменения только в нужных файлах; merge сделан
+                  вами.
+                </td>
+              </tr>
+              <tr>
+                <td>3.5 Автоматизация</td>
+                <td>
+                  В работе использованы своя команда <code>/self-review</code> и
+                  hook из 3.5; Issue B-7 агент прочитал через MCP.
+                </td>
+              </tr>
+              <tr>
+                <td>PR</td>
+                <td>
+                  В описании: что сделано, как проверено, что осталось, и ссылка
+                  <code>Closes #</code>
+                  на Issue B-7. Merge делаете вы.
+                </td>
+              </tr>
+              <tr>
+                <td>Заметка</td>
+                <td>
+                  В <code>docs/B-7-decisions.md</code> есть вопросы по
+                  требованиям, места вмешательства и цифры из
+                  <code>git log</code> и <code>/cost</code>, а не оценки «на
+                  глаз». Настройки агента в репозитории работают после
+                  клонирования.
+                </td>
+              </tr>
+            </table>
 
             <h3>
-              <span class="step-label">Шаг 4</span>Structured vibe coding — цикл
+              Заметка о решениях (до страницы,
+              <code>docs/B-7-decisions.md</code>)
             </h3>
-            <pre><code>Повторяемый цикл для каждой фичи:
-1. Спека (3.3)       -> что строим и критерии
-2. Plan              -> агент показывает план
-3. Ограниченная область -> только нужные файлы
-4. /review           -> своя проверка
-5. Тесты + diff      -> ручная верификация
-6. Commit            -> атомарный коммит</code></pre>
+            <ul class="cond">
+              <li>Какие вопросы по требованиям возникли и как они решены.</li>
+              <li>Где агент помог, где пришлось вмешиваться и почему.</li>
+              <li>
+                Метрики из системных данных: число коммитов, время от первого
+                коммита ветки до PR, сколько раз тесты сначала были красными,
+                стоимость сессий (<code>/cost</code>). Оценки вида «сэкономил 3
+                часа» не считаются. Если <code>/cost</code> не показывает сумму
+                (так бывает при работе по подписке), так и напишите.
+              </li>
+            </ul>
+            <pre><code>git log main..HEAD --reverse --format='%h %ci %s'   # коммиты ветки и их время
+git log main..HEAD --oneline | wc -l                 # число коммитов</code></pre>
 
-            <h3><span class="step-label">Шаг 5</span>Фиксируем workflow</h3>
-            <pre><code># WORKFLOW.md
-Каждая фича проходит цикл: spec -> plan -> scoped edit -> /review -> tests -> commit.
-Первый коммит проекта — CLAUDE.md, не исходный код.</code></pre>
+            <h3>Как проверить себя</h3>
+            <table>
+              <tr>
+                <th>Что проверяем</th>
+                <th>Как</th>
+              </tr>
+              <tr>
+                <td>Спецификация закрыта тестами</td>
+                <td>
+                  <code>grep -rn "NEEDS CLARIFICATION" specs/</code> ничего не
+                  выводит; для каждого критерия приёмки из
+                  <code>spec.md</code> вы можете назвать тест, который его
+                  проверяет.
+                </td>
+              </tr>
+              <tr>
+                <td>Тесты были раньше кода и правда падали</td>
+                <td>
+                  <code>git log --oneline main..HEAD</code> — коммит
+                  <code>test:</code> раньше <code>feat:</code>;
+                  <code
+                    >git checkout &lt;коммит с тестами&gt; &amp;&amp; npm
+                    test</code
+                  >
+                  — красный, затем <code>git checkout -</code>.
+                </td>
+              </tr>
+              <tr>
+                <td>Ничего не сломано и не задето лишнего</td>
+                <td>
+                  <code>npm run check</code> — зелёный;
+                  <code>git diff --stat main...HEAD</code> — только файлы
+                  задачи.
+                </td>
+              </tr>
+              <tr>
+                <td>Артефакты 3.5 в работе</td>
+                <td>
+                  <code>git ls-files .claude</code> показывает
+                  <code>/self-review</code> и hook; в
+                  <code>docs/notes.md</code> записано, где сработал hook и что
+                  сказал <code>/self-review</code>.
+                </td>
+              </tr>
+              <tr>
+                <td>PR</td>
+                <td>
+                  В описании три раздела: что сделано, как проверено, что
+                  осталось; есть <code>Closes #</code> на Issue B-7; merge
+                  сделан вами.
+                </td>
+              </tr>
+            </table>
+
+            <details class="solution">
+              <summary>Показать пример решения</summary>
+              <div class="body">
+                <p class="warn">
+                  Откройте после собственной попытки и самопроверки.
+                </p>
+                <pre><code>Вопросы по B-7 и решения (фрагмент spec.md):
+- Где хранится срок? Новое необязательное поле dueDate (ISO-дата) у книги.
+- Что такое «напоминать»? GET /reminders: непрочитанные книги со сроком
+  в ближайшие 24 часа и просроченные. Почта и push — вне объёма.
+- Срок в прошлом при добавлении? 422 с { detail }.
+- Прочитанные книги? В напоминания не попадают.</code></pre>
+                <pre><code># .claude/commands/self-review.md
+Проведи ревью текущей ветки. Код не меняй.
+
+1. Прочитай git diff main...HEAD и git log --oneline main..HEAD.
+2. Сверь изменения с CLAUDE.md и .specify/memory/constitution.md: перечисли каждое нарушение
+   с файлом и строкой.
+3. Для каждого критерия приёмки из spec.md найди тест, который его проверяет.
+   Перечисли критерии без теста.
+4. Перечисли изменённые файлы, которые не относятся к задаче.
+5. Итог: «готово к PR» или список того, что исправить.</code></pre>
+                <pre><code>Описание PR (пример):
+## Что сделано
+B-7: поле dueDate, валидация срока, GET /reminders (просроченные и ближайшие 24 ч).
+## Как проверено
+npm run check зелёный; тесты по критериям приёмки AC-1…AC-4 из spec.md;
+тесты закоммичены до реализации (a1b2c3d → d4e5f6a).
+## Что осталось
+Уведомления по почте — отдельный тикет; часовой пояс пользователя не учитывается.
+
+Closes #4</code></pre>
+                <pre><code>Заметка (фрагмент про метрики):
+- 7 коммитов в ветке (git log main..HEAD --oneline | wc -l).
+- 2 ч 40 мин от первого коммита до PR (git log main..HEAD --reverse --format='%ci').
+- Тесты были красными до реализации в 2 из 2 пар test/feat.
+- $1.85 за сессии (/cost).
+- Базовая линия: медианный cycle time похожих тикетов в Jira за квартал до AI — 3 дня.
+  Одна ветка — это точка, а не тренд: сравнивать нужно медианы команды за период.</code></pre>
+              </div>
+            </details>
+
             <div class="note">
-              <b>Итог модуля:</b> у вас есть каркас сервиса и, что важнее,
-              воспроизводимый процесс работы с агентом. В модуле 4 научимся
-              измерять качество его ответов.
+              <b>Если какой-то критерий не выполнен:</b> вернитесь к заданию и
+              курсу из колонки «Подтема» и повторите нужный шаг.
             </div>
           </article>
 
           <div class="pager">
             <a href="module2.html"
               ><div class="dir">← Назад</div>
-              <div class="ttl">Модуль 2. Prompt</div></a
+              <div class="ttl">Модуль 2. Prompt и структура</div></a
             >
-            <a class="next" href="module4.html"
+            <a
+              class="next"
+              href="https://olegrabushko.github.io/AI-Upskilling/module4.html"
               ><div class="dir">Дальше →</div>
               <div class="ttl">Модуль 4. Evals и tracing</div></a
             >
@@ -380,7 +2388,7 @@ git commit -m "fix: off-by-one in paginate, add tests"</code></pre>
     </div>
 
     <footer class="site-footer">
-      <div class="container">AI Upskilling · Модуль 3 · KnowledgeBot</div>
+      <div class="container">AI Upskilling · Модуль 3 · Shelf</div>
     </footer>
     <script src="app.js"></script>
   </body>
